@@ -8,6 +8,8 @@ probably each should send out a signal that says send pulse now? Still not too s
 
 IDEA: We fill out this table so that each stateflow generally matches the others
 
+Note*: Make each separate state have a different led colour turn on as an output, just so its easier to identify the states we're in when testing on the physical board.
+
 Stateflow | Inputs | Condition(s) | Outputs
 --------- | ------ | -------| -------
 AOO | enable, parameters |  | ?
