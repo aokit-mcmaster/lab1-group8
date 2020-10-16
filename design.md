@@ -8,14 +8,14 @@
 ## UTILITIES
 
 ### PACE
-| Inputs | p\_mode, p\_...\_pulse\_amplitude, p\_...\_pulse\_width, start\_pace|
+| Inputs | p\_mode, p\_...\_pulse\_width, start\_pace|
 | --- | --- |
 | Outputs | HARDWARE\_PINS |
 
 ![](https://github.com/aokit-mcmaster/lab1-group8/blob/master/images/PACE-state-diagram.png)
 
 ### SENSE
-| Inputs | p\_mode, p\_...\_sensitivity, p\_arp, p\_vrp, p\_pvarp |
+| Inputs | p\_mode, p\_arp, p\_vrp, p\_pvarp |
 | --- | --- |
 | Outputs | h\_...\_pulse\_detect |
 
