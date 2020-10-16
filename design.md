@@ -8,7 +8,7 @@
 ## UTILITIES
 
 ### PACE
-| Inputs | p\_mode, p\_lower\_rate\_limit, p\_upper\_rate\_limit, p\_...\_pulse\_amplitude, p\_...\_pulse\_width, start\_pace|
+| Inputs | p\_mode, p\_...\_pulse\_amplitude, p\_...\_pulse\_width, start\_pace|
 | --- | --- |
 | Outputs | HARDWARE\_PINS |
 
