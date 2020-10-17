@@ -11,29 +11,25 @@ public class DCM extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
+        labelWelcome = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("WELCOME");
+        labelWelcome.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        labelWelcome.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        labelWelcome.setText("WELCOME");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(labelWelcome, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 288, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(labelWelcome, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 150, Short.MAX_VALUE))
         );
 
         pack();
@@ -44,16 +40,16 @@ public class DCM extends javax.swing.JFrame {
         login.setLocationRelativeTo(null);
         login.setVisible(true);
         
-        while(!login.getLoginSuccess()) { 
-            Thread.sleep(100); 
-        }
+        while(!login.getLoginSuccess())
+            Thread.sleep(100);
+        login.setVisible(false);
         
         DCM program = new DCM();
-        program.setLocationRelativeTo(login);
+        program.setLocationRelativeTo(null);
         program.setVisible(true);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel labelWelcome;
     // End of variables declaration//GEN-END:variables
 }

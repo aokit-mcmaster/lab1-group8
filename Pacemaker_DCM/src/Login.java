@@ -8,16 +8,16 @@ import javax.swing.*;
 import java.awt.event.*;
 
 public class Login extends javax.swing.JFrame {
-    
+
     private String[] usernames = new String[10];
     private String[] passwords = new String[10];
     private int userCount = 0;
-    private int MAX_USER_COUNT = 10;
+    private final int MAX_USER_COUNT = 10;
     private volatile boolean LOGIN_SUCCESS = false;
-    
+
     public Login() {
-        usernames[0] = "admin";
-        passwords[0] = "password";
+        usernames[0] = "admin";     // for testing purposes
+        passwords[0] = "password";  // TODO: remove later
         initUserData();
         initComponents();
     }
@@ -56,6 +56,7 @@ public class Login extends javax.swing.JFrame {
                 buttonLoginActionPerformed(evt);
             }
         });
+        this.getRootPane().setDefaultButton(buttonLogin);
 
         buttonRegister.setText("Register");
         buttonRegister.addActionListener(new java.awt.event.ActionListener() {
@@ -123,32 +124,33 @@ public class Login extends javax.swing.JFrame {
      * reads from text file with hashed+salted user/pass info
      * TODO: implement hash and salt */
     private void initUserData() {
-        
+        // TODO: read 'userData.txt' and add to internal user/pass fields
     }
-    
+
     /* getter method to check if successful login attempt was made */
     protected boolean getLoginSuccess() {
         return LOGIN_SUCCESS;
     }
-    
+
     /* to check if user exists in the data */
     private boolean userExists(String username, String password) {
         for(int i=0; i<MAX_USER_COUNT; i++) {
-            if(username.equals(usernames[i]) 
+            if(username.equals(usernames[i])
                     && password.equals(passwords[i]))
                 return true;    // breaks the loop by returning true
         }
         return false;   // default return false
     }
-    
+
     private void buttonLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoginActionPerformed
         String inputUsername = usernameField.getText();
         String inputPassword = String.valueOf(passwordField.getPassword());
-        
-        if(userExists(inputUsername, inputPassword)) {
+
+        if(inputUsername.equals("") || inputPassword.equals("")) {
+            JOptionPane.showMessageDialog(this, "Fields cannot be empty.");
+        } else if(userExists(inputUsername, inputPassword)) {
             LOGIN_SUCCESS = true;
-            JOptionPane.showMessageDialog(this, "Login success!");
-            closeFrame();
+            JOptionPane.showMessageDialog(null, "Login success!");
         } else {
             usernameField.setText(null);
             passwordField.setText(null);
@@ -159,13 +161,13 @@ public class Login extends javax.swing.JFrame {
     private void buttonRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRegisterActionPerformed
         String inputUsername = usernameField.getText();
         String inputPassword = String.valueOf(passwordField.getPassword());
-        
+
         if(inputUsername.contains(" ")) {
-            JOptionPane.showMessageDialog(this, "Cannot uses spaces in username.");
+            JOptionPane.showMessageDialog(this, "Usernames can't contain spaces.");
         } else if(userExists(inputUsername, inputPassword)) {
             JOptionPane.showMessageDialog(this, "User already registered.");
         } else {
-            if(userCount < 10) {
+            if(userCount < MAX_USER_COUNT) {
                 // TODO: actually add user to 'userData.txt'
                 userCount++;
             } else {
@@ -177,7 +179,7 @@ public class Login extends javax.swing.JFrame {
     private void buttonRemoveUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRemoveUserActionPerformed
         String inputUsername = usernameField.getText();
         String inputPassword = String.valueOf(passwordField.getPassword());
-        
+
         if(userCount == 0)
             JOptionPane.showMessageDialog(this, "No users registered.");
         else if(!userExists(inputUsername, inputPassword))
@@ -198,10 +200,4 @@ public class Login extends javax.swing.JFrame {
     private javax.swing.JPasswordField passwordField;
     private javax.swing.JTextField usernameField;
     // End of variables declaration//GEN-END:variables
-
-    protected void closeFrame() {
-        setVisible(false);
-        dispose();
-    }
-    
 }
