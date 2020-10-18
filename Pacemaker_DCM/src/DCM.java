@@ -1,6 +1,4 @@
 
-import java.lang.Thread;
-
 public class DCM extends javax.swing.JFrame {
 
     public DCM() {
@@ -40,8 +38,8 @@ public class DCM extends javax.swing.JFrame {
         login.setLocationRelativeTo(null);
         login.setVisible(true);
         
-        while(!login.getLoginSuccess())
-            Thread.sleep(100);
+        synchronized(login) { login.wait(); }   // waits for notify call in Login object
+        login.setDefaultCloseOperation(javax.swing.WindowConstants.HIDE_ON_CLOSE);
         login.setVisible(false);
         
         DCM program = new DCM();
