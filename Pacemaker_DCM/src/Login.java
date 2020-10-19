@@ -5,19 +5,18 @@
  */
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.io.InputStream;
+import java.util.Scanner;
 
 public class Login extends javax.swing.JFrame {
 
-    private String[] usernames = new String[10];
-    private String[] passwords = new String[10];
-    private int userCount = 0;
-    private final int MAX_USER_COUNT = 10;
     private volatile boolean LOGIN_SUCCESS = false;
+    private final int MAX_USER_COUNT = 10;
+    private int userCount = 0;
+    private final String[] usernames = new String[MAX_USER_COUNT];
+    private final String[] passwords = new String[MAX_USER_COUNT];
 
     public Login() {
-        usernames[0] = "admin";     // for testing purposes
-        passwords[0] = "password";  // TODO: remove later
         initUserData();
         initComponents();
     }
@@ -27,8 +26,6 @@ public class Login extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
-
         labelTitle = new javax.swing.JLabel();
         labelUsername = new javax.swing.JLabel();
         labelPassword = new javax.swing.JLabel();
@@ -124,12 +121,22 @@ public class Login extends javax.swing.JFrame {
      * reads from text file with hashed+salted user/pass info
      * TODO: implement hash and salt */
     private void initUserData() {
-        // TODO: read 'userData.txt' and add to internal user/pass fields
-    }
-
-    /* getter method to check if successful login attempt was made */
-    protected boolean getLoginSuccess() {
-        return LOGIN_SUCCESS;
+        userCount = 0;  // making sure userCount is actually 0
+        try {
+            InputStream reader = getClass().getResourceAsStream("userData.txt");
+            Scanner scanner = new Scanner(reader);
+            String line;
+            while(scanner.hasNextLine()) {
+                line = scanner.nextLine();
+                usernames[userCount] = line.split(" ")[0];
+                passwords[userCount] = line.split(" ")[1];
+                userCount++;
+            }
+            scanner.close();
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /* to check if user exists in the data */
@@ -149,31 +156,37 @@ public class Login extends javax.swing.JFrame {
         if(inputUsername.equals("") || inputPassword.equals("")) {
             JOptionPane.showMessageDialog(this, "Fields cannot be empty.");
         } else if(userExists(inputUsername, inputPassword)) {
+            synchronized(this) { notify(); }
             LOGIN_SUCCESS = true;
             JOptionPane.showMessageDialog(null, "Login success!");
         } else {
-            usernameField.setText(null);
-            passwordField.setText(null);
             JOptionPane.showMessageDialog(this, "Incorrect username or password.");
         }
+
+        usernameField.setText(null);
+        passwordField.setText(null);
     }//GEN-LAST:event_buttonLoginActionPerformed
 
     private void buttonRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRegisterActionPerformed
         String inputUsername = usernameField.getText();
         String inputPassword = String.valueOf(passwordField.getPassword());
 
-        if(inputUsername.contains(" ")) {
-            JOptionPane.showMessageDialog(this, "Usernames can't contain spaces.");
+        if(inputUsername.contains(" ") || inputPassword.contains(" ")) {
+            JOptionPane.showMessageDialog(this, "Usernames & passwords can't contain spaces.");
         } else if(userExists(inputUsername, inputPassword)) {
             JOptionPane.showMessageDialog(this, "User already registered.");
         } else {
             if(userCount < MAX_USER_COUNT) {
                 // TODO: actually add user to 'userData.txt'
                 userCount++;
+                JOptionPane.showMessageDialog(this, "User successfully registered.");
             } else {
                 JOptionPane.showMessageDialog(this, "Max amount of users registered.");
             }
         }
+
+        usernameField.setText(null);
+        passwordField.setText(null);
     }//GEN-LAST:event_buttonRegisterActionPerformed
 
     private void buttonRemoveUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRemoveUserActionPerformed
@@ -187,7 +200,11 @@ public class Login extends javax.swing.JFrame {
         else {
             // TODO: actually remove user from 'userData.txt'
             userCount--;
+            JOptionPane.showMessageDialog(this, "User '" + inputUsername + "' successfully removed.");
         }
+
+        usernameField.setText(null);
+        passwordField.setText(null);
     }//GEN-LAST:event_buttonRemoveUserActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
