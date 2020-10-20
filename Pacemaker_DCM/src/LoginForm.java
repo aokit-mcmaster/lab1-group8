@@ -5,10 +5,11 @@
  */
 
 import javax.swing.*;
-import java.io.InputStream;
 import java.util.Scanner;
+import java.io.FileWriter;
+import java.io.FileReader;
 
-public class Login extends javax.swing.JFrame {
+public class LoginForm extends javax.swing.JFrame {
 
     private volatile boolean LOGIN_SUCCESS = false;
     private final int MAX_USER_COUNT = 10;
@@ -16,7 +17,7 @@ public class Login extends javax.swing.JFrame {
     private final String[] usernames = new String[MAX_USER_COUNT];
     private final String[] passwords = new String[MAX_USER_COUNT];
 
-    public Login() {
+    public LoginForm() {
         initUserData();
         initComponents();
     }
@@ -26,6 +27,7 @@ public class Login extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+
         labelTitle = new javax.swing.JLabel();
         labelUsername = new javax.swing.JLabel();
         labelPassword = new javax.swing.JLabel();
@@ -35,6 +37,7 @@ public class Login extends javax.swing.JFrame {
         buttonRegister = new javax.swing.JButton();
         buttonRemoveUser = new javax.swing.JButton();
 
+        getRootPane().setDefaultButton(buttonLogin);
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setLocation(new java.awt.Point(0, 0));
         setResizable(false);
@@ -53,7 +56,6 @@ public class Login extends javax.swing.JFrame {
                 buttonLoginActionPerformed(evt);
             }
         });
-        this.getRootPane().setDefaultButton(buttonLogin);
 
         buttonRegister.setText("Register");
         buttonRegister.addActionListener(new java.awt.event.ActionListener() {
@@ -73,8 +75,8 @@ public class Login extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(50, 50, 50)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(labelPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -84,13 +86,13 @@ public class Login extends javax.swing.JFrame {
                         .addComponent(labelUsername)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(usernameField))
-                    .addComponent(labelTitle, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(labelTitle, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(buttonRegister, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(buttonRemoveUser, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(buttonRegister, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonRemoveUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(buttonLogin, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(50, 50, 50))
+                .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -123,7 +125,7 @@ public class Login extends javax.swing.JFrame {
     private void initUserData() {
         userCount = 0;  // making sure userCount is actually 0
         try {
-            InputStream reader = getClass().getResourceAsStream("userData.txt");
+            FileReader reader = new FileReader("userData.txt");
             Scanner scanner = new Scanner(reader);
             String line;
             while(scanner.hasNextLine()) {
@@ -139,8 +141,24 @@ public class Login extends javax.swing.JFrame {
         }
     }
 
-    /* to check if user exists in the data */
-    private boolean userExists(String username, String password) {
+    /* rewrites the text file using internal variables */
+    private void updateUserDataFile() {
+        try {
+            FileWriter writer = new FileWriter("userData.txt");
+            for(int i=0; i<userCount; i++) {
+                writer.write(usernames[i] + " " + passwords[i] + "\n");
+            }
+            writer.close();
+//            for(int i=0; i<MAX_USER_COUNT; i++)
+//                System.out.println((i+1) + " " + usernames[i] + " " + passwords[i]);
+            System.out.println();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /* to check if username and password exists in the data */
+    private boolean userAndPassExists(String username, String password) {
         for(int i=0; i<MAX_USER_COUNT; i++) {
             if(username.equals(usernames[i])
                     && password.equals(passwords[i]))
@@ -149,13 +167,30 @@ public class Login extends javax.swing.JFrame {
         return false;   // default return false
     }
 
+    private boolean usernameExists(String username) {
+        for(int i=0; i<MAX_USER_COUNT; i++) {
+            if(username.equals(usernames[i]))
+                return true;    // breaks the loop by returning true
+        }
+        return false;   // default return false
+    }
+
+    private int userIndex(String username, String password) {
+        for(int i=0; i<MAX_USER_COUNT; i++) {
+            if(username.equals(usernames[i])
+                    && password.equals(passwords[i]))
+                return i;
+        }
+        return -1;
+    }
+
     private void buttonLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoginActionPerformed
         String inputUsername = usernameField.getText();
         String inputPassword = String.valueOf(passwordField.getPassword());
 
         if(inputUsername.equals("") || inputPassword.equals("")) {
             JOptionPane.showMessageDialog(this, "Fields cannot be empty.");
-        } else if(userExists(inputUsername, inputPassword)) {
+        } else if(userAndPassExists(inputUsername, inputPassword)) {
             synchronized(this) { notify(); }
             LOGIN_SUCCESS = true;
             JOptionPane.showMessageDialog(null, "Login success!");
@@ -173,12 +208,14 @@ public class Login extends javax.swing.JFrame {
 
         if(inputUsername.contains(" ") || inputPassword.contains(" ")) {
             JOptionPane.showMessageDialog(this, "Usernames & passwords can't contain spaces.");
-        } else if(userExists(inputUsername, inputPassword)) {
-            JOptionPane.showMessageDialog(this, "User already registered.");
+        } else if(usernameExists(inputUsername)) {
+            JOptionPane.showMessageDialog(this, "Username in use.");
         } else {
             if(userCount < MAX_USER_COUNT) {
-                // TODO: actually add user to 'userData.txt'
+                usernames[userCount] = inputUsername;
+                passwords[userCount] = inputPassword;
                 userCount++;
+                updateUserDataFile();
                 JOptionPane.showMessageDialog(this, "User successfully registered.");
             } else {
                 JOptionPane.showMessageDialog(this, "Max amount of users registered.");
@@ -195,11 +232,18 @@ public class Login extends javax.swing.JFrame {
 
         if(userCount == 0)
             JOptionPane.showMessageDialog(this, "No users registered.");
-        else if(!userExists(inputUsername, inputPassword))
+        else if(!userAndPassExists(inputUsername, inputPassword))
             JOptionPane.showMessageDialog(this, "User not registered.");
         else {
-            // TODO: actually remove user from 'userData.txt'
+            int i=userIndex(inputUsername, inputPassword);
+            for(; i<userCount-1; i++) {
+                usernames[i] = usernames[i+1];
+                passwords[i] = passwords[i+1];
+            }
+            usernames[i] = null;
+            passwords[i] = null;
             userCount--;
+            updateUserDataFile();
             JOptionPane.showMessageDialog(this, "User '" + inputUsername + "' successfully removed.");
         }
 

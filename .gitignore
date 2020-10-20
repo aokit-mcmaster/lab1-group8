@@ -1,2 +1,4 @@
 *DS_Store
 /Pacemaker_DCM/build/
+/Pacemaker_DCM/dist/
+/Pacemaker_DCM/nbproject/private/
