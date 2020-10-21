@@ -72,3 +72,17 @@
 **internal signals**
 
 - start\_pace
+
+## DCM Sample Screenshots
+
+**DCM Login Form**
+
+![](images/DCM_LOGIN-screenshot.png)
+
+**DCM Registration Form (ADMIN VIEW)**
+
+![](images/DCM_REGISTRATION-screenshot.png)
+
+**DCM Program**
+
+![](images/DCM_PROGRAM-screenshot.png)
