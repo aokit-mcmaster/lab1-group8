@@ -1,6 +1,6 @@
 
 public class RunClass {
-    public static void main(String args[]) throws InterruptedException {
+    public static void main(String args[]) throws InterruptedException, NoSuchFieldException {
         while(true) {
             // create login form
             LoginForm login = new LoginForm();
@@ -12,7 +12,7 @@ public class RunClass {
             login.dispose();
 
             // start DCM program
-            DCM program = new DCM();
+            DCM program = new DCM(login.getCurrentUser());
             program.setLocationRelativeTo(null);
             program.setVisible(true);
             
