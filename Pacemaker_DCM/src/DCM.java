@@ -1,7 +1,10 @@
+/**
+ * @author Muntakim Ali
+ * @organization McMaster University 3K04
+ */
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.*;
+import com.fazecast.jSerialComm.*;
 
 public class DCM extends javax.swing.JFrame {
 
@@ -35,15 +38,21 @@ public class DCM extends javax.swing.JFrame {
         initComponents();
         resetAllFields();
         initParameters();
+        initSerialPorts();
     }
     
     public DCM(String username) {
         initComponents();
         resetAllFields();
         initParameters();
+        initSerialPorts();
         ADMIN_MODE = username.equals("admin");
     }
 
+    private void initSerialPorts() {
+        
+    }
+    
     /* initialize the JFrame form */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -90,6 +99,7 @@ public class DCM extends javax.swing.JFrame {
         buttonSendParam = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         labelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         labelTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -511,11 +521,7 @@ public class DCM extends javax.swing.JFrame {
         SENDING_PARAMETERS = true;
         disableAllComponents();
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(DCM.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
 
         SENDING_PARAMETERS = false;
         enableAllComponents();
@@ -526,7 +532,7 @@ public class DCM extends javax.swing.JFrame {
         if(ADMIN_MODE) {
             EditUserForm editUserForm = new EditUserForm();
             editUserForm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            editUserForm.setLocationRelativeTo(null);
+            editUserForm.setLocationRelativeTo(this);
             editUserForm.setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "Login as admin.");
@@ -542,6 +548,7 @@ public class DCM extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonEditUser;
+    private javax.swing.ButtonGroup buttonGroupPMode;
     private javax.swing.JButton buttonLogout;
     private javax.swing.JButton buttonResetParam;
     private javax.swing.JButton buttonSendParam;
@@ -575,7 +582,6 @@ public class DCM extends javax.swing.JFrame {
     private javax.swing.JLabel labelVentPulseAmp;
     private javax.swing.JLabel labelVentPulseWidth;
     private javax.swing.JLabel labelVentSens;
-    private javax.swing.ButtonGroup buttonGroupPMode;
     private javax.swing.JRadioButton radioButtonAAI;
     private javax.swing.JRadioButton radioButtonAOO;
     private javax.swing.JRadioButton radioButtonVOO;

@@ -1,13 +1,13 @@
 /**
  * @author Muntakim Ali
  * @organization McMaster University 3K04
- *      - login screen for DCM for Pacemaker
  */
 
 import javax.swing.*;
 import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.FileReader;
+import java.io.IOException;
 
 public class LoginForm extends javax.swing.JFrame {
 
@@ -137,8 +137,14 @@ public class LoginForm extends javax.swing.JFrame {
             }
             scanner.close();
             reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            try {
+                FileWriter writer = new FileWriter("userData.txt");
+                writer.write("admin" + " " + "password");
+                writer.close();
+            } catch(Exception f) {
+                f.printStackTrace();
+            }
         }
     }
 
@@ -164,7 +170,6 @@ public class LoginForm extends javax.swing.JFrame {
                 writer.write(usernames[i] + " " + passwords[i] + "\n");
             }
             writer.close();
-            System.out.println();
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -233,16 +238,14 @@ public class LoginForm extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Usernames & passwords can't contain spaces.");
         } else if(usernameExists(inputUsername)) {
             JOptionPane.showMessageDialog(this, "Username in use.");
+        } else if(!(userCount < MAX_USER_COUNT)) {
+            JOptionPane.showMessageDialog(this, "Max amount of users registered.");
         } else {
-            if(userCount < MAX_USER_COUNT) {
-                usernames[userCount] = inputUsername;
-                passwords[userCount] = inputPassword;
-                userCount++;
-                updateUserDataFile();
-                JOptionPane.showMessageDialog(this, "User successfully registered.");
-            } else {
-                JOptionPane.showMessageDialog(this, "Max amount of users registered.");
-            }
+            usernames[userCount] = inputUsername;
+            passwords[userCount] = inputPassword;
+            userCount++;
+
+            updateUserDataFile();
         }
 
         usernameField.setText(null);

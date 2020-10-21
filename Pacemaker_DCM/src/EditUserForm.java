@@ -1,11 +1,13 @@
+/**
+ * @author Muntakim Ali
+ * @organization McMaster University 3K04
+ */
 
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 import javax.swing.*;
-
-
-/* TODO: finish this form */
 
 public class EditUserForm extends javax.swing.JFrame {
 
@@ -37,6 +39,7 @@ public class EditUserForm extends javax.swing.JFrame {
         passwordField = new javax.swing.JPasswordField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         labelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         labelTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -57,6 +60,8 @@ public class EditUserForm extends javax.swing.JFrame {
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
+        listUsers.setAutoscrolls(false);
+        listUsers.setRequestFocusEnabled(false);
         scrollPaneUserList.setViewportView(listUsers);
 
         buttonRemoveUser.setText("Remove");
@@ -83,9 +88,9 @@ public class EditUserForm extends javax.swing.JFrame {
                     .addComponent(labelTitle, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(labelRemove, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)
-                            .addComponent(scrollPaneUserList, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(buttonRemoveUser, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(labelRemove, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(buttonRemoveUser, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(scrollPaneUserList, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
@@ -100,7 +105,7 @@ public class EditUserForm extends javax.swing.JFrame {
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addGap(53, 53, 53)
                                 .addComponent(buttonRegisterUser, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 0, 0)))))
                 .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
@@ -149,8 +154,14 @@ public class EditUserForm extends javax.swing.JFrame {
             }
             scanner.close();
             reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            try {
+                FileWriter writer = new FileWriter("userData.txt");
+                writer.write("admin" + " " + "password");
+                writer.close();
+            } catch(Exception f) {
+                f.printStackTrace();
+            }
         }
     }
     
@@ -167,7 +178,7 @@ public class EditUserForm extends javax.swing.JFrame {
         }
     }
     
-    /* TODO: FINISH THIS BLOCK YEET */
+    /* ouputs internal usernames to JList */
     private void updateScrollPane() {
         DefaultListModel model = new DefaultListModel();
         for(int i=0; i<userCount; i++)
@@ -175,7 +186,6 @@ public class EditUserForm extends javax.swing.JFrame {
         listUsers.setModel(model);
     }
     
-
     /* check if only username exists in the data */
     private boolean usernameExists(String username) {
         for(int i=0; i<MAX_USER_COUNT; i++) {
@@ -207,7 +217,6 @@ public class EditUserForm extends javax.swing.JFrame {
             }
             usernames[i] = null;
             passwords[i] = null;
-            
             userCount--;
             
             updateUserDataFile();
@@ -228,26 +237,21 @@ public class EditUserForm extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Usernames & passwords can't contain spaces.");
         } else if(usernameExists(inputUsername)) {
             JOptionPane.showMessageDialog(this, "Username in use.");
+        } else if(!(userCount < MAX_USER_COUNT)) {
+            JOptionPane.showMessageDialog(this, "Max amount of users registered.");
         } else {
-            if(userCount < MAX_USER_COUNT) {
-                usernames[userCount] = inputUsername;
-                passwords[userCount] = inputPassword;
-                
-                userCount++;
-                
-                updateUserDataFile();
-                updateScrollPane();
-            } else {
-                JOptionPane.showMessageDialog(this, "Max amount of users registered.");
-            }
+            usernames[userCount] = inputUsername;
+            passwords[userCount] = inputPassword;
+            userCount++;
+
+            updateUserDataFile();
+            updateScrollPane();
         }
 
         usernameField.setText(null);
         passwordField.setText(null);
     }//GEN-LAST:event_buttonRegisterUserActionPerformed
 
-
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonRegisterUser;
     private javax.swing.JButton buttonRemoveUser;
