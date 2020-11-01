@@ -26,16 +26,15 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                  <Component id="labelRemove" alignment="0" max="32767" attributes="0"/>
+                  <Component id="buttonRemoveUser" alignment="0" max="32767" attributes="0"/>
+                  <Component id="scrollPaneUserList" alignment="0" min="-2" pref="150" max="-2" attributes="0"/>
+              </Group>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="labelTitle" alignment="0" pref="414" max="32767" attributes="0"/>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                          <Component id="labelRemove" alignment="0" max="32767" attributes="0"/>
-                          <Component id="buttonRemoveUser" alignment="0" max="32767" attributes="0"/>
-                          <Component id="scrollPaneUserList" alignment="0" min="-2" pref="150" max="-2" attributes="0"/>
-                      </Group>
+                  <Group type="102" attributes="0">
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" attributes="0">
+                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="labelPassword" min="-2" pref="62" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -46,16 +45,19 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="usernameField" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="labelRegister" alignment="0" max="32767" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
-                              <Component id="buttonRegisterUser" min="-2" pref="150" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="labelRegister" alignment="0" min="-2" pref="200" max="-2" attributes="0"/>
                       </Group>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="42" max="-2" attributes="0"/>
+                      <Component id="buttonRegisterUser" min="-2" pref="150" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="1" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="labelTitle" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

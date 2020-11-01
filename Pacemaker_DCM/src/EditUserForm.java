@@ -12,14 +12,22 @@ import javax.swing.*;
 public class EditUserForm extends javax.swing.JFrame {
 
     private final int MAX_USER_COUNT = 10;
-    private int userCount = 0;
-    private final String[] usernames = new String[MAX_USER_COUNT];
-    private final String[] passwords = new String[MAX_USER_COUNT];
+    private int USER_COUNT = 0;
+    private final String[] USERNAMES = new String[MAX_USER_COUNT];
+    private final String[] PASSWORDS = new String[MAX_USER_COUNT];
+    private static EditUserForm soleInstance;
     
     public EditUserForm() {
         initUserData();
         initComponents();
         updateScrollPane();
+    }
+    
+    /* singleton method ensures only one object of edit user form is insantiated */
+    protected static EditUserForm getInstance() {
+        if(soleInstance == null)
+            soleInstance = new EditUserForm();
+        return soleInstance;
     }
     
     @SuppressWarnings("unchecked")
@@ -84,15 +92,14 @@ public class EditUserForm extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(labelRemove, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(buttonRemoveUser, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(scrollPaneUserList, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(labelTitle, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(labelRemove, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(buttonRemoveUser, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(scrollPaneUserList, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(labelPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -101,12 +108,14 @@ public class EditUserForm extends javax.swing.JFrame {
                                 .addComponent(labelUsername)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(usernameField))
-                            .addComponent(labelRegister, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addGap(53, 53, 53)
-                                .addComponent(buttonRegisterUser, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, 0)))))
+                            .addComponent(labelRegister, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(42, 42, 42)
+                        .addComponent(buttonRegisterUser, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(18, 18, 18))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(labelTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -141,20 +150,20 @@ public class EditUserForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void initUserData() {
-        userCount = 0;  // making sure userCount is actually 0
+        USER_COUNT = 0;  // making sure userCount is actually 0
         try {
             FileReader reader = new FileReader("userData.txt");
             Scanner scanner = new Scanner(reader);
             String line;
             while(scanner.hasNextLine()) {
                 line = scanner.nextLine();
-                usernames[userCount] = line.split(" ")[0];
-                passwords[userCount] = line.split(" ")[1];
-                userCount++;
+                USERNAMES[USER_COUNT] = line.split(" ")[0];
+                PASSWORDS[USER_COUNT] = line.split(" ")[1];
+                USER_COUNT++;
             }
             scanner.close();
             reader.close();
-        } catch (IOException e) {
+        } catch(IOException e) {
             try {
                 FileWriter writer = new FileWriter("userData.txt");
                 writer.write("admin" + " " + "password");
@@ -168,8 +177,8 @@ public class EditUserForm extends javax.swing.JFrame {
     private void updateUserDataFile() {
         try {
             FileWriter writer = new FileWriter("userData.txt");
-            for(int i=0; i<userCount; i++) {
-                writer.write(usernames[i] + " " + passwords[i] + "\n");
+            for(int i=0; i<USER_COUNT; i++) {
+                writer.write(USERNAMES[i] + " " + PASSWORDS[i] + "\n");
             }
             writer.close();
             System.out.println();
@@ -181,15 +190,15 @@ public class EditUserForm extends javax.swing.JFrame {
     /* ouputs internal usernames to JList */
     private void updateScrollPane() {
         DefaultListModel model = new DefaultListModel();
-        for(int i=0; i<userCount; i++)
-            model.addElement(usernames[i]);
+        for(int i=0; i<USER_COUNT; i++)
+            model.addElement(USERNAMES[i]);
         listUsers.setModel(model);
     }
     
     /* check if only username exists in the data */
     private boolean usernameExists(String username) {
         for(int i=0; i<MAX_USER_COUNT; i++) {
-            if(username.equals(usernames[i]))
+            if(username.equals(USERNAMES[i]))
                 return true;    // breaks the loop by returning true
         }
         return false;   // default return false
@@ -199,7 +208,7 @@ public class EditUserForm extends javax.swing.JFrame {
     /* returns -1 if not found in database */
     private int userIndex(String username) {
         for(int i=0; i<MAX_USER_COUNT; i++) {
-            if(username.equals(usernames[i]))
+            if(username.equals(USERNAMES[i]))
                 return i;
         }
         return -1;
@@ -211,13 +220,13 @@ public class EditUserForm extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Can't remove admin.");
         else {
             int i=userIndex(inputUsername);
-            for(; i<userCount-1; i++) {
-                usernames[i] = usernames[i+1];
-                passwords[i] = passwords[i+1];
+            for(; i<USER_COUNT-1; i++) {
+                USERNAMES[i] = USERNAMES[i+1];
+                PASSWORDS[i] = PASSWORDS[i+1];
             }
-            usernames[i] = null;
-            passwords[i] = null;
-            userCount--;
+            USERNAMES[i] = null;
+            PASSWORDS[i] = null;
+            USER_COUNT--;
             
             updateUserDataFile();
             updateScrollPane();
@@ -231,18 +240,18 @@ public class EditUserForm extends javax.swing.JFrame {
         String inputUsername = usernameField.getText();
         String inputPassword = String.valueOf(passwordField.getPassword());
 
-        if(inputPassword.equals("")) {
-            JOptionPane.showMessageDialog(this, "Password can't be blank.");
+        if(inputUsername.equals("") || inputPassword.equals("")) {
+            JOptionPane.showMessageDialog(this, "Fields cannot be empty.");
         } else if(inputUsername.contains(" ") || inputPassword.contains(" ")) {
             JOptionPane.showMessageDialog(this, "Usernames & passwords can't contain spaces.");
         } else if(usernameExists(inputUsername)) {
             JOptionPane.showMessageDialog(this, "Username in use.");
-        } else if(!(userCount < MAX_USER_COUNT)) {
+        } else if(!(USER_COUNT < MAX_USER_COUNT)) {
             JOptionPane.showMessageDialog(this, "Max amount of users registered.");
         } else {
-            usernames[userCount] = inputUsername;
-            passwords[userCount] = inputPassword;
-            userCount++;
+            USERNAMES[USER_COUNT] = inputUsername;
+            PASSWORDS[USER_COUNT] = inputPassword;
+            USER_COUNT++;
 
             updateUserDataFile();
             updateScrollPane();

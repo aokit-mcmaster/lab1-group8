@@ -13,10 +13,10 @@ public class LoginForm extends javax.swing.JFrame {
 
     private volatile boolean LOGIN_SUCCESS = false;
     private final int MAX_USER_COUNT = 10;
-    private int userCount = 0;
-    private final String[] usernames = new String[MAX_USER_COUNT];
-    private final String[] passwords = new String[MAX_USER_COUNT];
-    private String currentUser;
+    private int USER_COUNT = 0;
+    private final String[] USERNAMES = new String[MAX_USER_COUNT];
+    private final String[] PASSWORDS = new String[MAX_USER_COUNT];
+    private String CURRENT_USER;
 
     public LoginForm() {
         initUserData();
@@ -38,14 +38,13 @@ public class LoginForm extends javax.swing.JFrame {
         buttonRegister = new javax.swing.JButton();
         buttonRemoveUser = new javax.swing.JButton();
 
-        getRootPane().setDefaultButton(buttonLogin);
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setLocation(new java.awt.Point(0, 0));
         setResizable(false);
 
         labelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         labelTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        labelTitle.setText("Login Screen");
+        labelTitle.setText("Login");
 
         labelUsername.setText("Username:");
 
@@ -57,6 +56,8 @@ public class LoginForm extends javax.swing.JFrame {
                 buttonLoginActionPerformed(evt);
             }
         });
+
+        getRootPane().setDefaultButton(buttonLogin);
 
         buttonRegister.setText("Register");
         buttonRegister.addActionListener(new java.awt.event.ActionListener() {
@@ -124,16 +125,16 @@ public class LoginForm extends javax.swing.JFrame {
      * reads from text file with hashed+salted user/pass info
      * TODO: implement hash and salt */
     private void initUserData() {
-        userCount = 0;  // making sure userCount is actually 0
+        USER_COUNT = 0;  // making sure userCount is actually 0
         try {
             FileReader reader = new FileReader("userData.txt");
             Scanner scanner = new Scanner(reader);
             String line;
             while(scanner.hasNextLine()) {
                 line = scanner.nextLine();
-                usernames[userCount] = line.split(" ")[0];
-                passwords[userCount] = line.split(" ")[1];
-                userCount++;
+                USERNAMES[USER_COUNT] = line.split(" ")[0];
+                PASSWORDS[USER_COUNT] = line.split(" ")[1];
+                USER_COUNT++;
             }
             scanner.close();
             reader.close();
@@ -149,25 +150,21 @@ public class LoginForm extends javax.swing.JFrame {
     }
 
     public String getCurrentUser() throws NoSuchFieldException {
-        if(!LOGIN_SUCCESS) 
+        if(!LOGIN_SUCCESS)
             throw new NoSuchFieldException("User not logged in.");
-        return currentUser;
+        return CURRENT_USER;
     }
-    
+
     public boolean getLoginStatus() {
         return LOGIN_SUCCESS;
     }
-    
-    public void setLoginStatus(boolean status) {
-        LOGIN_SUCCESS = status;
-    }
-    
+
     /* rewrites the text file using internal variables */
     private void updateUserDataFile() {
         try {
             FileWriter writer = new FileWriter("userData.txt");
-            for(int i=0; i<userCount; i++) {
-                writer.write(usernames[i] + " " + passwords[i] + "\n");
+            for(int i=0; i<USER_COUNT; i++) {
+                writer.write(USERNAMES[i] + " " + PASSWORDS[i] + "\n");
             }
             writer.close();
         } catch(Exception e) {
@@ -178,8 +175,8 @@ public class LoginForm extends javax.swing.JFrame {
     /* to check if username and password exists in the data */
     private boolean userAndPassExists(String username, String password) {
         for(int i=0; i<MAX_USER_COUNT; i++) {
-            if(username.equals(usernames[i])
-                    && password.equals(passwords[i]))
+            if(username.equals(USERNAMES[i])
+                    && password.equals(PASSWORDS[i]))
                 return true;    // breaks the loop by returning true
         }
         return false;   // default return false
@@ -188,18 +185,18 @@ public class LoginForm extends javax.swing.JFrame {
     /* check if only username exists in the data */
     private boolean usernameExists(String username) {
         for(int i=0; i<MAX_USER_COUNT; i++) {
-            if(username.equals(usernames[i]))
+            if(username.equals(USERNAMES[i]))
                 return true;    // breaks the loop by returning true
         }
         return false;   // default return false
     }
-    
+
     /* returns index of username and password */
     /* returns -1 if not found in database */
     private int userIndex(String username, String password) {
         for(int i=0; i<MAX_USER_COUNT; i++) {
-            if(username.equals(usernames[i])
-                    && password.equals(passwords[i]))
+            if(username.equals(USERNAMES[i])
+                    && password.equals(PASSWORDS[i]))
                 return i;
         }
         return -1;
@@ -216,8 +213,8 @@ public class LoginForm extends javax.swing.JFrame {
         } else if(userAndPassExists(inputUsername, inputPassword)) {
             synchronized(this) { notify(); }
             LOGIN_SUCCESS = true;
-            currentUser = inputUsername;
-            JOptionPane.showMessageDialog(null, "You are logged in as '" + currentUser + "'.");
+            CURRENT_USER = inputUsername;
+            JOptionPane.showMessageDialog(null, "You are logged in as '" + CURRENT_USER + "'.");
         } else {
             JOptionPane.showMessageDialog(this, "Incorrect username or password.");
         }
@@ -232,18 +229,18 @@ public class LoginForm extends javax.swing.JFrame {
         String inputUsername = usernameField.getText();
         String inputPassword = String.valueOf(passwordField.getPassword());
 
-        if(inputPassword.equals("")) {
-            JOptionPane.showMessageDialog(this, "Password can't be blank.");
+        if(inputUsername.equals("") || inputPassword.equals("")) {
+            JOptionPane.showMessageDialog(this, "Fields cannot be empty.");
         } else if(inputUsername.contains(" ") || inputPassword.contains(" ")) {
             JOptionPane.showMessageDialog(this, "Usernames & passwords can't contain spaces.");
         } else if(usernameExists(inputUsername)) {
             JOptionPane.showMessageDialog(this, "Username in use.");
-        } else if(!(userCount < MAX_USER_COUNT)) {
+        } else if(!(USER_COUNT < MAX_USER_COUNT)) {
             JOptionPane.showMessageDialog(this, "Max amount of users registered.");
         } else {
-            usernames[userCount] = inputUsername;
-            passwords[userCount] = inputPassword;
-            userCount++;
+            USERNAMES[USER_COUNT] = inputUsername;
+            PASSWORDS[USER_COUNT] = inputPassword;
+            USER_COUNT++;
 
             updateUserDataFile();
         }
@@ -258,21 +255,26 @@ public class LoginForm extends javax.swing.JFrame {
         String inputUsername = usernameField.getText();
         String inputPassword = String.valueOf(passwordField.getPassword());
 
-        if(userCount == 0)
+        if(inputUsername.equals("admin"))
+            JOptionPane.showMessageDialog(this, "Can't remove admin.");
+        else if(inputUsername.equals("") || inputPassword.equals(""))
+            JOptionPane.showMessageDialog(this, "Fields cannot be empty.");
+        else if(USER_COUNT == 0)
             JOptionPane.showMessageDialog(this, "No users registered.");
         else if(!userAndPassExists(inputUsername, inputPassword))
             JOptionPane.showMessageDialog(this, "Incorrect username or password.");
         else {
-            int i=userIndex(inputUsername, inputPassword);
-            for(; i<userCount-1; i++) {
-                usernames[i] = usernames[i+1];
-                passwords[i] = passwords[i+1];
+            int i = userIndex(inputUsername, inputPassword);
+            for(; i<USER_COUNT-1; i++) {
+                USERNAMES[i] = USERNAMES[i+1];
+                PASSWORDS[i] = PASSWORDS[i+1];
             }
-            usernames[i] = null;
-            passwords[i] = null;
-            userCount--;
+            USERNAMES[i] = null;
+            PASSWORDS[i] = null;
+            USER_COUNT--;
             updateUserDataFile();
-            JOptionPane.showMessageDialog(this, "User '" + inputUsername + "' successfully removed.");
+            JOptionPane.showMessageDialog(this,
+                    "User '" + inputUsername + "' successfully removed.");
         }
 
         usernameField.setText(null);
