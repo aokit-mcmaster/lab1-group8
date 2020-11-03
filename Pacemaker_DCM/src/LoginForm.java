@@ -143,6 +143,7 @@ public class LoginForm extends javax.swing.JFrame {
                 FileWriter writer = new FileWriter("userData.txt");
                 writer.write("admin" + " " + "password");
                 writer.close();
+                initUserData(); // THIS MIGHT BE BAD
             } catch(Exception f) {
                 f.printStackTrace();
             }
