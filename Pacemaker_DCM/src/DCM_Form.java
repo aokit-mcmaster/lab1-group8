@@ -1,6 +1,11 @@
 
 import javax.swing.*;
 import com.fazecast.jSerialComm.SerialPort;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
 
 public class DCM_Form extends javax.swing.JFrame {
 
@@ -28,10 +33,10 @@ public class DCM_Form extends javax.swing.JFrame {
     // internal boolean field to track when parameters are being sent
     private boolean ADMIN_MODE = false;
     private boolean IS_CONNECTED = false;
-    
+
     // current user initialized as "NULL USER"
     String username = "NULL USER";
-    
+
     /**
      * Constructor method for the DCM form.
      * @param username - sets the username of the DCM form—if username is 'admin',
@@ -613,25 +618,36 @@ public class DCM_Form extends javax.swing.JFrame {
      * All input fields from DCM form is put into instance fields.
      */
     private void initParameters() {
-        // switch statement to get p_mode from respective value of inputPacingModes
-        switch((String) inputPacingModes.getSelectedItem()) {
-            case "AOO": p_mode = PACEMAKER_MODE.AOO;
-            case "VOO": p_mode = PACEMAKER_MODE.VOO;
-            case "AAI": p_mode = PACEMAKER_MODE.AAI;
-            case "VVI": p_mode = PACEMAKER_MODE.VVI;
+        // always check before assigning private instance variables
+        checkInputFields();
+
+        // determining input from jComboBox
+        String p_mode_Str = (String) inputPacingModes.getSelectedItem();
+        if(p_mode_Str.equals("AOO"))
+            p_mode = PACEMAKER_MODE.AOO;
+        else if(p_mode_Str.equals("VOO"))
+            p_mode = PACEMAKER_MODE.VOO;
+        else if(p_mode_Str.equals("AAI"))
+            p_mode = PACEMAKER_MODE.AAI;
+        else if(p_mode_Str.equals("VVI"))
+            p_mode = PACEMAKER_MODE.VVI;
+        else {
+            // if no conditions met (jComboBox error or parsing error)
+            p_mode = PACEMAKER_MODE.AOO;
+            System.out.println("ERROR: p_mode default assigned AOO.\n");
         }
-        
+
         p_lower_rate_limit = (int) inputLowerRateLimit.getValue();
         p_upper_rate_limit = (int) inputUpperRateLimit.getValue();
-        
+
         p_atr_pulse_amplitude = (float) inputAtrAmplitude.getValue();
         p_atr_pulse_width = (float) inputAtrPulseWidth.getValue();
         p_atr_sensitivity = (float) inputAtrSensitivity.getValue();
-        
+
         p_vent_pulse_amplitude = (float) inputVenAmplitude.getValue();
         p_vent_pulse_width = (float) inputVenPulseWidth.getValue();
         p_vent_sensitivity = (float) inputVenSensitivity.getValue();
-        
+
         p_arp = (int) inputARP.getValue();
         p_vrp = (int) inputVRP.getValue();
         p_pvarp = (int) inputPVARP.getValue();
@@ -643,7 +659,7 @@ public class DCM_Form extends javax.swing.JFrame {
         p_rate_smoothing_enable = inputSmoothEnable.isSelected();
         p_rate_smoothing_percent = p_rate_smoothing_enable ? (int) inputSmoothPercent.getValue() : 0;
     }
-    
+
     /**
      * This method should be called before sending to pacemaker.
      * It checks all values, and if they're outside their respective bounds
@@ -652,32 +668,32 @@ public class DCM_Form extends javax.swing.JFrame {
      * exception is thrown.
      * @return true if there was an error in input, false otherwise
      */
-    private boolean roundParameters() {
-        boolean error = false;
-        
-        if((int) inputHystRateLimit.getValue() 
+    private boolean checkInputFields() {
+        boolean error = false; // returns false by default
+
+        if((int) inputHystRateLimit.getValue()
                 > (int) inputLowerRateLimit.getValue()) {
             inputHystRateLimit.setValue(inputLowerRateLimit.getValue());
             error = true;
         }
-        if((int) inputLowerRateLimit.getValue() 
+        if((int) inputLowerRateLimit.getValue()
                 > (int) inputUpperRateLimit.getValue()) {
             inputLowerRateLimit.setValue(inputUpperRateLimit.getValue());
             error = true;
         }
-        
-        return error; // returns true by default
+
+        return error;
     }
-    
+
+    private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
+        initParameters();
+        System.out.print(p_mode);
+    }//GEN-LAST:event_buttonSendParamsActionPerformed
+
     private void buttonConnectPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConnectPortActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_buttonConnectPortActionPerformed
 
-    private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
-        roundParameters();
-        initParameters();
-    }//GEN-LAST:event_buttonSendParamsActionPerformed
-    
     /**
      * Sets all input fields as the default/nominal values for the DCM.
      * This is for if the user wants to load nominal values and edit from there.
@@ -711,16 +727,103 @@ public class DCM_Form extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
 
-    private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_buttonSaveUserDefaultActionPerformed
-
     private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_buttonLoadSettingsActionPerformed
 
+    private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
+        // rounds data and assigns private instance parameters
+        initParameters();
+        try {
+            // text file is just named as username
+            String fileName = username + ".txt";
+
+            // get the working directory for new subdirectory
+            String dir = System.getProperty("user.dir") + File.separator + "DefaultParameters";
+
+            // creates directory if it doesn't exist; skips otherwise
+            if((new File(dir)).mkdir()) {
+                JOptionPane.showMessageDialog(this,
+                    "New default folder created");
+            }
+
+            // write all parameters to file directory
+            FileWriter writer = new FileWriter(new File(dir, fileName));
+            writer.write("p_mode: " + p_mode + "\n");
+            writer.write("p_lower_rate_limit: " + p_lower_rate_limit + "\n");
+            writer.write("p_upper_rate_limit: " + p_upper_rate_limit + "\n");
+            writer.write("p_atr_pulse_amplitude: " + p_atr_pulse_amplitude + "\n");
+            writer.write("p_atr_pulse_width: " + p_atr_pulse_width + "\n");
+            writer.write("p_atr_sensitivity: " + p_atr_sensitivity + "\n");
+            writer.write("p_vent_pulse_amplitude: " + p_vent_pulse_amplitude + "\n");
+            writer.write("p_vent_pulse_width: " + p_vent_pulse_width + "\n");
+            writer.write("p_vent_sensitivity: " + p_vent_sensitivity + "\n");
+            writer.write("p_vrp: " + p_vrp + "\n");
+            writer.write("p_arp: " + p_arp + "\n");
+            writer.write("p_pvarp: " + p_pvarp + "\n");
+            writer.write("p_hysteresis_enable: " + p_hysteresis_enable + "\n");
+            writer.write("p_hysteresis_rate_limit: " + p_hysteresis_rate_limit + "\n");
+            writer.write("p_rate_smoothing_enable: " + p_rate_smoothing_enable + "\n");
+            writer.write("p_rate_smoothing_percent: " + p_rate_smoothing_percent + "\n");
+            writer.close();
+
+            // output message to user to tell them directory which file is saved to
+            JOptionPane.showMessageDialog(this,
+                    "Default values for '" + username + "' successfully saved.");
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_buttonSaveUserDefaultActionPerformed
+
+    /**
+     * Initializes parameters from the input fields, and then writes the parameters
+     * to a file in a subdirectory of the working directory of the program.
+     * If subdirectory doesn't exist, it is created.
+     * File names are in format 'username_unixTimeStamp.txt' to ensure that all
+     * files are unique even if the same user wrote a file.
+     */
     private void buttonExportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonExportSettingsActionPerformed
-        // TODO add your handling code here:
+        // rounds data and assigns private instance parameters
+        initParameters();
+        try {
+            // generate filename combined from username and unix timestamp
+            String unixTimeStr = String.valueOf(System.currentTimeMillis() / 1000L);
+            String fileName = username + "_" + unixTimeStr + ".txt";
+
+            // get the working directory for new subdirectory
+            String dir = System.getProperty("user.dir") + File.separator + "ExportedParameters";
+
+            // creates directory if it doesn't exist; skips otherwise
+            (new File(dir)).mkdir();
+
+            // write all parameters to file directory
+            FileWriter writer = new FileWriter(new File(dir, fileName));
+            writer.write("p_mode: " + p_mode + "\n");
+            writer.write("p_lower_rate_limit: " + p_lower_rate_limit + "\n");
+            writer.write("p_upper_rate_limit: " + p_upper_rate_limit + "\n");
+            writer.write("p_atr_pulse_amplitude: " + p_atr_pulse_amplitude + "\n");
+            writer.write("p_atr_pulse_width: " + p_atr_pulse_width + "\n");
+            writer.write("p_atr_sensitivity: " + p_atr_sensitivity + "\n");
+            writer.write("p_vent_pulse_amplitude: " + p_vent_pulse_amplitude + "\n");
+            writer.write("p_vent_pulse_width: " + p_vent_pulse_width + "\n");
+            writer.write("p_vent_sensitivity: " + p_vent_sensitivity + "\n");
+            writer.write("p_vrp: " + p_vrp + "\n");
+            writer.write("p_arp: " + p_arp + "\n");
+            writer.write("p_pvarp: " + p_pvarp + "\n");
+            writer.write("p_hysteresis_enable: " + p_hysteresis_enable + "\n");
+            writer.write("p_hysteresis_rate_limit: " + p_hysteresis_rate_limit + "\n");
+            writer.write("p_rate_smoothing_enable: " + p_rate_smoothing_enable + "\n");
+            writer.write("p_rate_smoothing_percent: " + p_rate_smoothing_percent + "\n");
+            writer.close();
+
+            // output message to user to tell them directory which file is saved to
+            JOptionPane.showMessageDialog(this,
+                    "File saved to: " + dir + File.separator + fileName);
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_buttonExportSettingsActionPerformed
 
     /**
@@ -748,20 +851,19 @@ public class DCM_Form extends javax.swing.JFrame {
 
     /**
      * Notifies other suspended threads that user logged out.
-     * Disposes the DCM form and prompts user of successful logout.
+     * Classes that handle this form should dispose it upon notify() call.
      */
     private void logout(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logout
-        synchronized(this) { 
+        synchronized(this) {
             notify();
         }
-        dispose();
         JOptionPane.showMessageDialog(null, "Successfuly logged out.");
     }//GEN-LAST:event_logout
 
     /**
      * If user selects hysteresis, the respective spinner is enabled.
      * If user deselects it, the spinner is disabled.
-     * Function also is performed upon any state changes to check box from other methods. 
+     * Function also is performed upon any state changes to check box from other methods.
      */
     private void inputHystEnableStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_inputHystEnableStateChanged
         inputHystRateLimit.setEnabled(inputHystEnable.isSelected());
@@ -770,7 +872,7 @@ public class DCM_Form extends javax.swing.JFrame {
     /**
      * If user selects rate smoothing, the respective spinner is enabled.
      * If user deselects it, the spinner is disabled.
-     * Function also is performed upon any state changes to check box from other methods. 
+     * Function also is performed upon any state changes to check box from other methods.
      */
     private void inputSmoothEnableStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_inputSmoothEnableStateChanged
         inputSmoothPercent.setEnabled(inputSmoothEnable.isSelected());
