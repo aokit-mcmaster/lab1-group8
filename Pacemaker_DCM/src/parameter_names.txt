@@ -1,0 +1,16 @@
+p_mode
+p_lower_rate_limit
+p_upper_rate_limit
+p_atr_pulse_amplitude
+p_atr_pulse_width
+p_atr_sensitivity
+p_vent_pulse_amplitude
+p_vent_pulse_width
+p_vent_sensitivity
+p_vrp
+p_arp
+p_pvarp
+p_hysteresis_enable
+p_hysteresis_rate_limit
+p_rate_smoothing_enable
+p_rate_smoothing_percent
