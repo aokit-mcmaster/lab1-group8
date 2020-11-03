@@ -11,18 +11,18 @@ import java.io.IOException;
 
 public class LoginForm extends javax.swing.JFrame {
 
-    private volatile boolean LOGIN_SUCCESS = false;
+    private volatile static boolean LOGIN_SUCCESS = false;
     private final int MAX_USER_COUNT = 10;
     private int USER_COUNT = 0;
     private final String[] USERNAMES = new String[MAX_USER_COUNT];
     private final String[] PASSWORDS = new String[MAX_USER_COUNT];
     private String CURRENT_USER;
-
+    
     public LoginForm() {
         initUserData();
         initComponents();
     }
-
+    
     /* initialize all the components and widgets
      * sets positioning for each component */
     @SuppressWarnings("unchecked")
@@ -39,6 +39,7 @@ public class LoginForm extends javax.swing.JFrame {
         buttonRemoveUser = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Welcome Screen & Login");
         setLocation(new java.awt.Point(0, 0));
         setResizable(false);
 
@@ -56,7 +57,6 @@ public class LoginForm extends javax.swing.JFrame {
                 buttonLoginActionPerformed(evt);
             }
         });
-
         getRootPane().setDefaultButton(buttonLogin);
 
         buttonRegister.setText("Register");
@@ -80,20 +80,20 @@ public class LoginForm extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(labelPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(passwordField))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(labelUsername)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(usernameField))
                     .addComponent(labelTitle, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(buttonRegister, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(buttonRemoveUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(buttonLogin, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(buttonLogin, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(labelPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(labelUsername))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(usernameField)
+                            .addComponent(passwordField))))
                 .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
