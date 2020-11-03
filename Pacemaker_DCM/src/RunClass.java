@@ -5,16 +5,20 @@
 
 import com.fazecast.jSerialComm.SerialPort;
 import java.awt.BorderLayout;
+import java.io.File;
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import javax.swing.*;
 
 public class RunClass {
-    public static void main(String args[]) 
-            throws InterruptedException, NoSuchFieldException, NoSuchAlgorithmException {
- 
+    
+    public static void lookAndFeel(String style) {
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Windows".equals(info.getName())) {
+                if (style.equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
@@ -28,6 +32,12 @@ public class RunClass {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+    }
+    
+    public static void main(String args[]) 
+            throws InterruptedException, NoSuchFieldException, NoSuchAlgorithmException {
+ 
+        lookAndFeel("Windows");
 
 //        /* Create and display the form */
 //        java.awt.EventQueue.invokeLater(new Runnable() {
@@ -58,19 +68,6 @@ public class RunClass {
 //            System.out.println();
 //        }
 
-//        JFrame frame = new JFrame("Desabling editing Spinner");
-//        JSpinner spinner = new JSpinner();
-//        JFormattedTextField tf = ((JSpinner.DefaultEditor)spinner.getEditor()).getTextField();
-//        tf.setEditable(false);
-//        
-//        spinner.setValue(new Integer(100));
-//        JPanel panel = new JPanel();
-//        panel.add(spinner);
-//        frame.add(panel, BorderLayout.NORTH);
-//        frame.setSize(400, 400);
-//        frame.setVisible(true);
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
         while(true) {
             // create login form
             LoginForm login = new LoginForm();
@@ -90,8 +87,6 @@ public class RunClass {
             synchronized(program) { program.wait(); }
             program.dispose();
         }
-        
-        
         
     }
 }
