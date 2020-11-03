@@ -1,16 +1,7 @@
 
+import javax.swing.*;
 import com.fazecast.jSerialComm.SerialPort;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/**
- *
- * @author Muntakim
- */
 public class DCM_Form extends javax.swing.JFrame {
 
     // operating modes of pacemaker
@@ -18,31 +9,37 @@ public class DCM_Form extends javax.swing.JFrame {
 
     // paramaters to send to pacemaker
     PACEMAKER_MODE p_mode;
-    float p_lower_rate_limit;
-    float p_upper_rate_limit;
+    int p_lower_rate_limit;
+    int p_upper_rate_limit;
     float p_atr_pulse_amplitude;
     float p_vent_pulse_amplitude;
     float p_atr_pulse_width;
     float p_vent_pulse_width;
     float p_atr_sensitivity;
     float p_vent_sensitivity;
-    float p_vrp;
-    float p_arp;
-    float p_pvarp;
+    int p_vrp;
+    int p_arp;
+    int p_pvarp;
     boolean p_hysteresis_enable;
-    float p_hysteresis_rate_limit;
+    int p_hysteresis_rate_limit;
     boolean p_rate_smoothing_enable;
-    float p_rate_smoothing_percent;
+    int p_rate_smoothing_percent;
 
     // internal boolean field to track when parameters are being sent
     private boolean ADMIN_MODE = false;
     private boolean IS_CONNECTED = false;
     
-    // current user
-    String username = "GORDON_RAMSAY";
+    // current user initialized as "NULL USER"
+    String username = "NULL USER";
     
-    
-    public DCM_Form() {
+    /**
+     * Constructor method for the DCM form.
+     * @param username - sets the username of the DCM form—if username is 'admin',
+     * then ADMIN_MODE is declared true; false otherwise
+     */
+    public DCM_Form(String username) {
+        this.username = username;
+        ADMIN_MODE = username.equals("admin");
         initComponents();
     }
 
@@ -55,6 +52,7 @@ public class DCM_Form extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        JFormattedTextField tf;
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
         jLabel2 = new javax.swing.JLabel();
@@ -79,7 +77,7 @@ public class DCM_Form extends javax.swing.JFrame {
         jLabel26 = new javax.swing.JLabel();
         jLabel27 = new javax.swing.JLabel();
         jLabel28 = new javax.swing.JLabel();
-        pacingModes = new javax.swing.JComboBox<>();
+        inputPacingModes = new javax.swing.JComboBox<>();
         inputLowerRateLimit = new javax.swing.JSpinner();
         inputUpperRateLimit = new javax.swing.JSpinner();
         inputAtrAmplitude = new javax.swing.JSpinner();
@@ -195,16 +193,20 @@ public class DCM_Form extends javax.swing.JFrame {
         jLabel28.setText("Rate Smoothing");
         jLabel28.setPreferredSize(new java.awt.Dimension(180, 16));
 
-        pacingModes.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "AOO", "VOO", "AAI", "VVI" }));
-        pacingModes.setFocusable(false);
+        inputPacingModes.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "AOO", "VOO", "AAI", "VVI" }));
+        inputPacingModes.setFocusable(false);
 
         inputLowerRateLimit.setModel(new javax.swing.SpinnerNumberModel(60, 30, 175, 5));
         inputLowerRateLimit.setFocusable(false);
         inputLowerRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputLowerRateLimit.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputUpperRateLimit.setModel(new javax.swing.SpinnerNumberModel(120, 50, 175, 5));
         inputUpperRateLimit.setFocusable(false);
         inputUpperRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputUpperRateLimit.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputAtrAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
         inputAtrAmplitude.setFocusable(false);
@@ -244,26 +246,43 @@ public class DCM_Form extends javax.swing.JFrame {
         inputPVARP.setPreferredSize(new java.awt.Dimension(25, 26));
 
         inputHystRateLimit.setModel(new javax.swing.SpinnerNumberModel(30, 30, 175, 5));
+        inputHystRateLimit.setEnabled(false);
         inputHystRateLimit.setFocusable(false);
         inputHystRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
 
         inputSmoothPercent.setModel(new javax.swing.SpinnerNumberModel(5, 0, 25, 1));
+        inputSmoothPercent.setEnabled(false);
         inputSmoothPercent.setFocusable(false);
         inputSmoothPercent.setPreferredSize(new java.awt.Dimension(25, 26));
 
         inputHystEnable.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        inputHystEnable.setText(" Enable                                  ");
+        inputHystEnable.setText("Enable                                  ");
         inputHystEnable.setFocusable(false);
         inputHystEnable.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         inputHystEnable.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        inputHystEnable.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                inputHystEnableStateChanged(evt);
+            }
+        });
 
         inputSmoothEnable.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        inputSmoothEnable.setText(" Enable                                  ");
+        inputSmoothEnable.setText("Enable                                  ");
         inputSmoothEnable.setFocusable(false);
         inputSmoothEnable.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         inputSmoothEnable.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        inputSmoothEnable.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                inputSmoothEnableStateChanged(evt);
+            }
+        });
 
         buttonSendParams.setText("Send Current Parameters to Pacemaker");
+        buttonSendParams.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonSendParamsActionPerformed(evt);
+            }
+        });
 
         portConnectedBox.setBorder(null);
         portConnectedBox.setEnabled(false);
@@ -279,33 +298,83 @@ public class DCM_Form extends javax.swing.JFrame {
 
         buttonConnectPort.setText("Connect");
         buttonConnectPort.setFocusable(false);
+        buttonConnectPort.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonConnectPortActionPerformed(evt);
+            }
+        });
 
         buttonLogout.setText("Logout");
         buttonLogout.setFocusable(false);
+        buttonLogout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                logout(evt);
+            }
+        });
 
         buttonHelp.setText("Help");
         buttonHelp.setFocusable(false);
+        buttonHelp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonHelpActionPerformed(evt);
+            }
+        });
 
         buttonChangePassword.setText("Change Password");
         buttonChangePassword.setFocusable(false);
+        buttonChangePassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonChangePasswordActionPerformed(evt);
+            }
+        });
 
         buttonEditUser.setText("Edit Users");
         buttonEditUser.setFocusable(false);
+        buttonEditUser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonEditUserActionPerformed(evt);
+            }
+        });
 
         buttonLoadNominal.setText("Load Nominal");
         buttonLoadNominal.setFocusable(false);
+        buttonLoadNominal.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonLoadNominalActionPerformed(evt);
+            }
+        });
 
         buttonLoadUserDefault.setText("Load User's Default");
         buttonLoadUserDefault.setFocusable(false);
+        buttonLoadUserDefault.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonLoadUserDefaultActionPerformed(evt);
+            }
+        });
 
         buttonSaveUserDefault.setText("Save User's Default");
         buttonSaveUserDefault.setFocusable(false);
+        buttonSaveUserDefault.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonSaveUserDefaultActionPerformed(evt);
+            }
+        });
 
         buttonLoadSettings.setText("Load Settings");
         buttonLoadSettings.setFocusable(false);
+        buttonLoadSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonLoadSettingsActionPerformed(evt);
+            }
+        });
 
         buttonExportSettings.setText("Export Settings");
         buttonExportSettings.setFocusable(false);
+        buttonExportSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonExportSettingsActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -327,7 +396,7 @@ public class DCM_Form extends javax.swing.JFrame {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(inputLowerRateLimit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(inputUpperRateLimit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(pacingModes, javax.swing.GroupLayout.Alignment.TRAILING, 0, 63, Short.MAX_VALUE))))
+                                    .addComponent(inputPacingModes, javax.swing.GroupLayout.Alignment.TRAILING, 0, 63, Short.MAX_VALUE))))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -441,7 +510,7 @@ public class DCM_Form extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel10)
-                                    .addComponent(pacingModes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(inputPacingModes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel12)
@@ -540,39 +609,172 @@ public class DCM_Form extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * @param args the command line arguments
+     * This method updates all private instance fields to be sent to pacemaker.
+     * All input fields from DCM form is put into instance fields.
      */
-//    public static void main(String args[]) {
-//        /* Set the Nimbus look and feel */
-//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-//         */
-//        try {
-//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-//                if ("Nimbus".equals(info.getName())) {
-//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-//                    break;
-//                }
-//            }
-//        } catch (ClassNotFoundException ex) {
-//            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (InstantiationException ex) {
-//            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (IllegalAccessException ex) {
-//            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-//            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        }
-//        //</editor-fold>
-//
-//        /* Create and display the form */
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                new DCM_Form().setVisible(true);
-//            }
-//        });
-//    }
+    private void initParameters() {
+        // switch statement to get p_mode from respective value of inputPacingModes
+        switch((String) inputPacingModes.getSelectedItem()) {
+            case "AOO": p_mode = PACEMAKER_MODE.AOO;
+            case "VOO": p_mode = PACEMAKER_MODE.VOO;
+            case "AAI": p_mode = PACEMAKER_MODE.AAI;
+            case "VVI": p_mode = PACEMAKER_MODE.VVI;
+        }
+        
+        p_lower_rate_limit = (int) inputLowerRateLimit.getValue();
+        p_upper_rate_limit = (int) inputUpperRateLimit.getValue();
+        
+        p_atr_pulse_amplitude = (float) inputAtrAmplitude.getValue();
+        p_atr_pulse_width = (float) inputAtrPulseWidth.getValue();
+        p_atr_sensitivity = (float) inputAtrSensitivity.getValue();
+        
+        p_vent_pulse_amplitude = (float) inputVenAmplitude.getValue();
+        p_vent_pulse_width = (float) inputVenPulseWidth.getValue();
+        p_vent_sensitivity = (float) inputVenSensitivity.getValue();
+        
+        p_arp = (int) inputARP.getValue();
+        p_vrp = (int) inputVRP.getValue();
+        p_pvarp = (int) inputPVARP.getValue();
+
+        // to make sure hardware gets 0 for hysteresis rate limit and rate smoothing
+        // if respective enables are both unselected
+        p_hysteresis_enable = inputSmoothEnable.isSelected();
+        p_hysteresis_rate_limit = p_hysteresis_enable ? (int) inputHystRateLimit.getValue() : 0;
+        p_rate_smoothing_enable = inputSmoothEnable.isSelected();
+        p_rate_smoothing_percent = p_rate_smoothing_enable ? (int) inputSmoothPercent.getValue() : 0;
+    }
+    
+    /**
+     * This method should be called before sending to pacemaker.
+     * It checks all values, and if they're outside their respective bounds
+     * or aren't in proper increment, they are rounded to the appropriate value.
+     * Also checks if inputs are valid (only integers/floats); otherwise an
+     * exception is thrown.
+     * @return true if there was an error in input, false otherwise
+     */
+    private boolean roundParameters() {
+        boolean error = false;
+        
+        if((int) inputHystRateLimit.getValue() 
+                > (int) inputLowerRateLimit.getValue()) {
+            inputHystRateLimit.setValue(inputLowerRateLimit.getValue());
+            error = true;
+        }
+        if((int) inputLowerRateLimit.getValue() 
+                > (int) inputUpperRateLimit.getValue()) {
+            inputLowerRateLimit.setValue(inputUpperRateLimit.getValue());
+            error = true;
+        }
+        
+        return error; // returns true by default
+    }
+    
+    private void buttonConnectPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConnectPortActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonConnectPortActionPerformed
+
+    private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
+        roundParameters();
+        initParameters();
+    }//GEN-LAST:event_buttonSendParamsActionPerformed
+    
+    /**
+     * Sets all input fields as the default/nominal values for the DCM.
+     * This is for if the user wants to load nominal values and edit from there.
+     */
+    private void buttonLoadNominalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadNominalActionPerformed
+        inputPacingModes.setSelectedIndex(0);
+
+        inputLowerRateLimit.setValue(60);
+        inputUpperRateLimit.setValue(120);
+
+        inputAtrAmplitude.setValue(3.5);
+        inputAtrPulseWidth.setValue(0.4);
+        inputAtrSensitivity.setValue(0.75);
+
+        inputVenAmplitude.setValue(3.5);
+        inputVenPulseWidth.setValue(0.4);
+        inputVenSensitivity.setValue(2.5);
+
+        inputARP.setValue(320);
+        inputVRP.setValue(250);
+        inputPVARP.setValue(250);
+
+        inputHystEnable.setSelected(false);
+        inputHystRateLimit.setValue(30);
+
+        inputSmoothEnable.setSelected(false);
+        inputSmoothPercent.setValue(5);
+    }//GEN-LAST:event_buttonLoadNominalActionPerformed
+
+    private void buttonLoadUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadUserDefaultActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
+
+    private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonSaveUserDefaultActionPerformed
+
+    private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonLoadSettingsActionPerformed
+
+    private void buttonExportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonExportSettingsActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonExportSettingsActionPerformed
+
+    /**
+     * Creates single instance of 'EditUserForm'.
+     * Only accessible if user is logged in as administrator.
+     */
+    private void buttonEditUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonEditUserActionPerformed
+        if(ADMIN_MODE) {
+            EditUserForm editUserForm = EditUserForm.getInstance();
+            editUserForm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            editUserForm.setLocationRelativeTo(this);
+            editUserForm.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "Login as admin.");
+        }
+    }//GEN-LAST:event_buttonEditUserActionPerformed
+
+    private void buttonChangePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonChangePasswordActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonChangePasswordActionPerformed
+
+    private void buttonHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonHelpActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonHelpActionPerformed
+
+    /**
+     * Notifies other suspended threads that user logged out.
+     * Disposes the DCM form and prompts user of successful logout.
+     */
+    private void logout(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logout
+        synchronized(this) { 
+            notify();
+        }
+        dispose();
+        JOptionPane.showMessageDialog(null, "Successfuly logged out.");
+    }//GEN-LAST:event_logout
+
+    /**
+     * If user selects hysteresis, the respective spinner is enabled.
+     * If user deselects it, the spinner is disabled.
+     * Function also is performed upon any state changes to check box from other methods. 
+     */
+    private void inputHystEnableStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_inputHystEnableStateChanged
+        inputHystRateLimit.setEnabled(inputHystEnable.isSelected());
+    }//GEN-LAST:event_inputHystEnableStateChanged
+
+    /**
+     * If user selects rate smoothing, the respective spinner is enabled.
+     * If user deselects it, the spinner is disabled.
+     * Function also is performed upon any state changes to check box from other methods. 
+     */
+    private void inputSmoothEnableStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_inputSmoothEnableStateChanged
+        inputSmoothPercent.setEnabled(inputSmoothEnable.isSelected());
+    }//GEN-LAST:event_inputSmoothEnableStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonChangePassword;
@@ -594,6 +796,7 @@ public class DCM_Form extends javax.swing.JFrame {
     private javax.swing.JSpinner inputHystRateLimit;
     private javax.swing.JSpinner inputLowerRateLimit;
     private javax.swing.JSpinner inputPVARP;
+    private javax.swing.JComboBox<String> inputPacingModes;
     private javax.swing.JCheckBox inputSmoothEnable;
     private javax.swing.JSpinner inputSmoothPercent;
     private javax.swing.JSpinner inputUpperRateLimit;
@@ -625,7 +828,6 @@ public class DCM_Form extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JComboBox<String> pacingModes;
     private javax.swing.JCheckBox portConnectedBox;
     private javax.swing.JComboBox<String> portSelectionBox;
     // End of variables declaration//GEN-END:variables
