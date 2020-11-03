@@ -4,15 +4,39 @@
  */
 
 import com.fazecast.jSerialComm.SerialPort;
+import java.awt.BorderLayout;
 import java.security.NoSuchAlgorithmException;
+import javax.swing.*;
 
 public class RunClass {
     public static void main(String args[]) 
             throws InterruptedException, NoSuchFieldException, NoSuchAlgorithmException {
  
-        for (SerialPort serial : SerialPort.getCommPorts())
-            System.out.println(serial.getSystemPortName());
-        System.out.println();
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Windows".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+
+//        /* Create and display the form */
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                DCM_Form form = new DCM_Form();
+//                form.setLocationRelativeTo(null);
+//                form.setVisible(true);
+//            }
+//        });
 
         // testing hash algorithm
 //        String[] inputs = new String[] {
@@ -33,6 +57,19 @@ public class RunClass {
 //            System.out.println(HashAlg.hash(input));
 //            System.out.println();
 //        }
+
+//        JFrame frame = new JFrame("Desabling editing Spinner");
+//        JSpinner spinner = new JSpinner();
+//        JFormattedTextField tf = ((JSpinner.DefaultEditor)spinner.getEditor()).getTextField();
+//        tf.setEditable(false);
+//        
+//        spinner.setValue(new Integer(100));
+//        JPanel panel = new JPanel();
+//        panel.add(spinner);
+//        frame.add(panel, BorderLayout.NORTH);
+//        frame.setSize(400, 400);
+//        frame.setVisible(true);
+//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         while(true) {
             // create login form
@@ -45,7 +82,7 @@ public class RunClass {
             login.dispose();
 
             // start DCM program
-            DCM program = new DCM(login.getCurrentUser());
+            DCM_Form program = new DCM_Form(login.getCurrentUser());
             program.setLocationRelativeTo(null);
             program.setVisible(true);
             
@@ -53,6 +90,8 @@ public class RunClass {
             synchronized(program) { program.wait(); }
             program.dispose();
         }
+        
+        
         
     }
 }
