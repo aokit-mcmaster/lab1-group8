@@ -1,5 +1,7 @@
 *DS_Store
 *~$*
+/.idea/
 /Pacemaker_DCM/build/
 /Pacemaker_DCM/dist/
 /Pacemaker_DCM/nbproject/private/
+/Pacemaker_DCM/userData.txt
