@@ -24,7 +24,12 @@ public class LoginForm extends javax.swing.JFrame {
     public LoginForm() throws InterruptedException {
         initUserData();
         initComponents();
-        animateScreen();
+        
+        // start animation
+        String animationDir = System.getProperty("user.dir")
+                + File.separator + "assets"
+                + File.separator + "heart_animation_ascii";
+        (new HeartBeatAnimation(animationDir)).animate(animationScreen);
     }
     
     /* initialize all the components and widgets
@@ -177,28 +182,6 @@ public class LoginForm extends javax.swing.JFrame {
                 f.printStackTrace();
             }
         }
-    }
-    
-    private void animateScreen() throws InterruptedException {
-        new Thread(() -> {
-            
-            String animationDir = System.getProperty("user.dir");
-            animationDir +=  File.separator + "assets";
-            animationDir +=  File.separator + "heart_animation_ascii";
-            HeartBeatAnimation anim = new HeartBeatAnimation(animationDir);
-            
-            Frame current = anim.head;
-            while(current.next != null) {
-                animationScreen.setText("\n\n" + current.frame);
-                current = current.next;
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(LoginForm.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            
-        }).start();
     }
 
     public String getCurrentUser() throws NoSuchFieldException {

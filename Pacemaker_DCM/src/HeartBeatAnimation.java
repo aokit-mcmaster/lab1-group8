@@ -2,6 +2,9 @@
 import java.io.File;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JTextArea;
 
 /**
  * A "frame" in a an "animation" is like
@@ -20,6 +23,7 @@ class Frame {
 public class HeartBeatAnimation {
     
     public Frame head;
+    private String folderDir;
     
     /**
      * Constructor method searches for all .txt files in passed folder directory.
@@ -29,6 +33,9 @@ public class HeartBeatAnimation {
      */
     public HeartBeatAnimation(String folderDir) {
         try {
+            // assigns folder directory
+            this.folderDir = folderDir;
+            
             // gets folder directory and ensures it exists
             File folder = new File(folderDir);
             if(folder.exists() && folder.isDirectory()) {
@@ -63,7 +70,29 @@ public class HeartBeatAnimation {
         } catch(Exception e) {
             e.printStackTrace();
         }
-        
+    }
+    
+    /**
+     * This method starts the animation on a separate thread, as to not stall the program.
+     * This animation is a loop that cyclically iterates through the frames in the animation
+     * sequence.
+     * @param screen - the JTextArea which the ascii art is printed onto.
+     */
+    public void animate(JTextArea screen) {
+        new Thread(() -> {
+
+            Frame current = this.head;
+            while(current.next != null) {
+                screen.setText("\n\n" + current.frame);
+                current = current.next;
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(LoginForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            
+        }).start();
     }
 
 }
