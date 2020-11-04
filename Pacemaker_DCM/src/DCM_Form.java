@@ -619,7 +619,7 @@ public class DCM_Form extends javax.swing.JFrame {
      */
     private void initParameters() {
         // always check before assigning private instance variables
-        checkInputFields();
+        isValidInputFields();
 
         // determining input from jComboBox
         String p_mode_Str = (String) inputPacingModes.getSelectedItem();
@@ -668,26 +668,25 @@ public class DCM_Form extends javax.swing.JFrame {
      * exception is thrown.
      * @return true if there was an error in input, false otherwise
      */
-    private boolean checkInputFields() {
-        boolean error = false; // returns false by default
+    private boolean isValidInputFields() {
+        boolean valid = true; // returns false by default
 
         if((int) inputHystRateLimit.getValue()
                 > (int) inputLowerRateLimit.getValue()) {
             inputHystRateLimit.setValue(inputLowerRateLimit.getValue());
-            error = true;
+            valid = false;
         }
         if((int) inputLowerRateLimit.getValue()
                 > (int) inputUpperRateLimit.getValue()) {
             inputLowerRateLimit.setValue(inputUpperRateLimit.getValue());
-            error = true;
+            valid = false;
         }
 
-        return error;
+        return valid;
     }
 
     private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
         initParameters();
-        System.out.print(p_mode);
     }//GEN-LAST:event_buttonSendParamsActionPerformed
 
     private void buttonConnectPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConnectPortActionPerformed
@@ -700,37 +699,109 @@ public class DCM_Form extends javax.swing.JFrame {
      */
     private void buttonLoadNominalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadNominalActionPerformed
         inputPacingModes.setSelectedIndex(0);
-
+        
         inputLowerRateLimit.setValue(60);
         inputUpperRateLimit.setValue(120);
-
-        inputAtrAmplitude.setValue(3.5);
-        inputAtrPulseWidth.setValue(0.4);
+        
+        inputAtrAmplitude.setValue(5);
+        inputAtrPulseWidth.setValue(1.0);
         inputAtrSensitivity.setValue(0.75);
-
-        inputVenAmplitude.setValue(3.5);
-        inputVenPulseWidth.setValue(0.4);
+        
+        inputVenAmplitude.setValue(5);
+        inputVenPulseWidth.setValue(1.0);
         inputVenSensitivity.setValue(2.5);
-
+        
         inputARP.setValue(320);
         inputVRP.setValue(250);
         inputPVARP.setValue(250);
-
+        
         inputHystEnable.setSelected(false);
         inputHystRateLimit.setValue(30);
-
         inputSmoothEnable.setSelected(false);
         inputSmoothPercent.setValue(5);
     }//GEN-LAST:event_buttonLoadNominalActionPerformed
 
+    /**
+     * Reads the user file containing default parameters for each user. The file
+     * is read line by line, and each line is parsed by splitting it into the 
+     * parameter name and value. Each value is assigned to each respective text field
+     * in the user interface.
+     */
     private void buttonLoadUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadUserDefaultActionPerformed
-        // TODO add your handling code here:
+        try {
+            // the working directory and the filename
+            String fileDir = System.getProperty("user.dir") + File.separator + "DefaultParameters";
+            fileDir += File.separator + username + ".txt";
+            
+            // initializes the reader and the scanner
+            FileReader reader = new FileReader(fileDir);
+            Scanner scanner = new Scanner(reader);
+            
+            // iterates through text file line by line
+            String line, paramName, paramValue;
+            while(scanner.hasNextLine()) {
+                line = scanner.nextLine();
+                
+                // splits line into parameter name and value
+                paramName = line.split(" ")[0];
+                paramValue = line.split(" ")[1];
+                
+                // checks if parameter name matches respective input field setter
+                if(paramName.equals("p_mode"))
+                    inputPacingModes.setSelectedItem(paramValue);
+                if(paramName.equals("p_lower_rate_limit"))
+                    inputLowerRateLimit.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_upper_rate_limit"))
+                    inputUpperRateLimit.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_atr_pulse_amplitude"))
+                    inputAtrAmplitude.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_atr_pulse_width"))
+                    inputAtrPulseWidth.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_atr_sensitivity"))
+                    inputAtrSensitivity.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_vent_pulse_amplitude"))
+                    inputVenAmplitude.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_vent_pulse_width"))
+                    inputVenPulseWidth.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_vent_sensitivity"))
+                    inputVenSensitivity.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_vrp"))
+                    inputARP.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_arp"))
+                    inputVRP.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_pvarp"))
+                    inputPVARP.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_hysteresis_enable"))
+                    inputHystEnable.setSelected(Boolean.parseBoolean(paramValue));
+                if(paramName.equals("p_hysteresis_rate_limit"))
+                    inputHystRateLimit.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_rate_smoothing_enable"))
+                    inputSmoothEnable.setSelected(Boolean.parseBoolean(paramValue));
+                if(paramName.equals("p_rate_smoothing_percent"))
+                    inputSmoothPercent.setValue(Integer.valueOf(paramValue));
+            }
+            scanner.close();
+            reader.close();  
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
 
     private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_buttonLoadSettingsActionPerformed
-
+    
+//    private void saveParametersToDirectory(String dir) {
+//        initParameters();
+//    }
+    
+    /**
+     * Initializes parameters from the input fields, and then writes the parameters
+     * to a file in a subdirectory (/DefaultParameters/) of the working directory of the program.
+     * If subdirectory doesn't exist, it is created.
+     * File names are in format 'username.txt' to ensure that there is only one copy
+     * of a default parameter set per each user.
+     */
     private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
         // rounds data and assigns private instance parameters
         initParameters();
@@ -744,27 +815,27 @@ public class DCM_Form extends javax.swing.JFrame {
             // creates directory if it doesn't exist; skips otherwise
             if((new File(dir)).mkdir()) {
                 JOptionPane.showMessageDialog(this,
-                    "New default folder created");
+                    "Default folder missing. New folder created.");
             }
 
             // write all parameters to file directory
             FileWriter writer = new FileWriter(new File(dir, fileName));
-            writer.write("p_mode: " + p_mode + "\n");
-            writer.write("p_lower_rate_limit: " + p_lower_rate_limit + "\n");
-            writer.write("p_upper_rate_limit: " + p_upper_rate_limit + "\n");
-            writer.write("p_atr_pulse_amplitude: " + p_atr_pulse_amplitude + "\n");
-            writer.write("p_atr_pulse_width: " + p_atr_pulse_width + "\n");
-            writer.write("p_atr_sensitivity: " + p_atr_sensitivity + "\n");
-            writer.write("p_vent_pulse_amplitude: " + p_vent_pulse_amplitude + "\n");
-            writer.write("p_vent_pulse_width: " + p_vent_pulse_width + "\n");
-            writer.write("p_vent_sensitivity: " + p_vent_sensitivity + "\n");
-            writer.write("p_vrp: " + p_vrp + "\n");
-            writer.write("p_arp: " + p_arp + "\n");
-            writer.write("p_pvarp: " + p_pvarp + "\n");
-            writer.write("p_hysteresis_enable: " + p_hysteresis_enable + "\n");
-            writer.write("p_hysteresis_rate_limit: " + p_hysteresis_rate_limit + "\n");
-            writer.write("p_rate_smoothing_enable: " + p_rate_smoothing_enable + "\n");
-            writer.write("p_rate_smoothing_percent: " + p_rate_smoothing_percent + "\n");
+            writer.write("p_mode " + p_mode + "\n");
+            writer.write("p_lower_rate_limit " + p_lower_rate_limit + "\n");
+            writer.write("p_upper_rate_limit " + p_upper_rate_limit + "\n");
+            writer.write("p_atr_pulse_amplitude " + p_atr_pulse_amplitude + "\n");
+            writer.write("p_atr_pulse_width " + p_atr_pulse_width + "\n");
+            writer.write("p_atr_sensitivity " + p_atr_sensitivity + "\n");
+            writer.write("p_vent_pulse_amplitude " + p_vent_pulse_amplitude + "\n");
+            writer.write("p_vent_pulse_width " + p_vent_pulse_width + "\n");
+            writer.write("p_vent_sensitivity " + p_vent_sensitivity + "\n");
+            writer.write("p_vrp " + p_vrp + "\n");
+            writer.write("p_arp " + p_arp + "\n");
+            writer.write("p_pvarp " + p_pvarp + "\n");
+            writer.write("p_hysteresis_enable " + p_hysteresis_enable + "\n");
+            writer.write("p_hysteresis_rate_limit " + p_hysteresis_rate_limit + "\n");
+            writer.write("p_rate_smoothing_enable " + p_rate_smoothing_enable + "\n");
+            writer.write("p_rate_smoothing_percent " + p_rate_smoothing_percent + "\n");
             writer.close();
 
             // output message to user to tell them directory which file is saved to
@@ -778,7 +849,7 @@ public class DCM_Form extends javax.swing.JFrame {
 
     /**
      * Initializes parameters from the input fields, and then writes the parameters
-     * to a file in a subdirectory of the working directory of the program.
+     * to a file in a subdirectory (/ExportedParameters/) of the working directory of the program.
      * If subdirectory doesn't exist, it is created.
      * File names are in format 'username_unixTimeStamp.txt' to ensure that all
      * files are unique even if the same user wrote a file.
