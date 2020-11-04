@@ -3,11 +3,14 @@
  * @organization McMaster University 3K04
  */
 
+import java.io.File;
 import javax.swing.*;
 import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class LoginForm extends javax.swing.JFrame {
 
@@ -18,9 +21,10 @@ public class LoginForm extends javax.swing.JFrame {
     private final String[] PASSWORDS = new String[MAX_USER_COUNT];
     private String CURRENT_USER;
     
-    public LoginForm() {
+    public LoginForm() throws InterruptedException {
         initUserData();
         initComponents();
+        animateScreen();
     }
     
     /* initialize all the components and widgets
@@ -29,6 +33,7 @@ public class LoginForm extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        animationScreen = new javax.swing.JTextArea();
         labelTitle = new javax.swing.JLabel();
         labelUsername = new javax.swing.JLabel();
         labelPassword = new javax.swing.JLabel();
@@ -37,11 +42,20 @@ public class LoginForm extends javax.swing.JFrame {
         buttonLogin = new javax.swing.JButton();
         buttonRegister = new javax.swing.JButton();
         buttonRemoveUser = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Welcome Screen & Login");
+        setTitle("WELCOME TO PACEMAKER");
         setLocation(new java.awt.Point(0, 0));
         setResizable(false);
+
+        animationScreen.setEditable(false);
+        animationScreen.setColumns(20);
+        animationScreen.setFont(new java.awt.Font("Courier New", 0, 5)); // NOI18N
+        animationScreen.setLineWrap(true);
+        animationScreen.setRows(5);
+        animationScreen.setAutoscrolls(false);
+        animationScreen.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         labelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         labelTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -73,33 +87,38 @@ public class LoginForm extends javax.swing.JFrame {
             }
         });
 
+        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(animationScreen, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(labelTitle, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(buttonRegister, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(buttonRemoveUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(buttonLogin, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(labelPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(labelUsername))
+                            .addComponent(labelUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(usernameField)
-                            .addComponent(passwordField))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(usernameField, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)
+                            .addComponent(passwordField)))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(labelTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(buttonLogin, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(buttonRegister, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(buttonRemoveUser, javax.swing.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)))
                 .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(36, 36, 36)
                 .addComponent(labelTitle)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -109,14 +128,24 @@ public class LoginForm extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(labelPassword))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(buttonLogin)
+                .addGap(6, 6, 6)
+                .addComponent(buttonRegister)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(buttonRegister)
-                    .addComponent(buttonRemoveUser))
-                .addGap(18, 18, 18))
+                .addComponent(buttonRemoveUser)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(animationScreen, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jSeparator1))
+                .addContainerGap())
         );
+
+        animationScreen.getAccessibleContext().setAccessibleDescription("");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -148,6 +177,28 @@ public class LoginForm extends javax.swing.JFrame {
                 f.printStackTrace();
             }
         }
+    }
+    
+    private void animateScreen() throws InterruptedException {
+        new Thread(() -> {
+            
+            String animationDir = System.getProperty("user.dir");
+            animationDir +=  File.separator + "assets";
+            animationDir +=  File.separator + "heart_animation_ascii";
+            HeartBeatAnimation anim = new HeartBeatAnimation(animationDir);
+            
+            Frame current = anim.head;
+            while(current.next != null) {
+                animationScreen.setText("\n\n" + current.frame);
+                current = current.next;
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(LoginForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            
+        }).start();
     }
 
     public String getCurrentUser() throws NoSuchFieldException {
@@ -283,9 +334,11 @@ public class LoginForm extends javax.swing.JFrame {
     }//GEN-LAST:event_buttonRemoveUserActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextArea animationScreen;
     private javax.swing.JButton buttonLogin;
     private javax.swing.JButton buttonRegister;
     private javax.swing.JButton buttonRemoveUser;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel labelPassword;
     private javax.swing.JLabel labelTitle;
     private javax.swing.JLabel labelUsername;
