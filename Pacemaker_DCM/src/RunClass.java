@@ -3,15 +3,7 @@
  * @organization McMaster University 3K04
  */
 
-import com.fazecast.jSerialComm.SerialPort;
-import java.awt.BorderLayout;
-import java.io.File;
-import java.io.FileWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import javax.swing.*;
 
 public class RunClass {
     
@@ -39,15 +31,6 @@ public class RunClass {
  
         lookAndFeel("Windows");
 
-//        /* Create and display the form */
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                DCM_Form form = new DCM_Form();
-//                form.setLocationRelativeTo(null);
-//                form.setVisible(true);
-//            }
-//        });
-
         // testing hash algorithm
 //        String[] inputs = new String[] {
 //            "fat tuna",
@@ -67,7 +50,7 @@ public class RunClass {
 //            System.out.println(HashAlg.hash(input));
 //            System.out.println();
 //        }
-
+        
         while(true) {
             // create login form
             LoginForm login = new LoginForm();
