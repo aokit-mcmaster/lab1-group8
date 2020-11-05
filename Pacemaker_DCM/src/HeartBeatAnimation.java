@@ -80,19 +80,21 @@ public class HeartBeatAnimation {
      */
     public void animate(JTextArea screen) {
         new Thread(() -> {
-
-            Frame current = this.head;
-            while(current.next != null) {
-                screen.setText("\n\n" + current.frame);
-                current = current.next;
-                try {
+            try {
+                Frame current = this.head;
+                while(current.next != null) {
+                    screen.setText("\n\n" + current.frame);
+                    current = current.next;
                     Thread.sleep(50);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(LoginForm.class.getName()).log(Level.SEVERE, null, ex);
                 }
+            } catch (InterruptedException ex) {
+                Logger.getLogger(HeartBeatAnimation.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
         }).start();
+    }
+    
+    public void firstFrame(JTextArea screen) {
+        screen.setText("\n\n" + head.frame);
     }
 
 }

@@ -1,9 +1,17 @@
 *DS_Store
 *~$*
 /.idea/
+
 /Pacemaker_DCM/build/
 /Pacemaker_DCM/dist/
 /Pacemaker_DCM/nbproject/private/
+
 /Pacemaker_DCM/userData.txt
+
+/Pacemaker_DCM/DefaultParameters
+/Pacemaker_DCM/ExportedParameters
+
 /Pacemaker_DCM/assets/heart_animation_png
 /Pacemaker_DCM/assets/heart_animation_ascii_INSANE_RES
+/Pacemaker_DCM/assets/heart_animation_ascii_largeMoreLevels
+/Pacemaker_DCM/assets/heart_animation_ascii-OLD
