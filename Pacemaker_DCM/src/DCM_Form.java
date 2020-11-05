@@ -216,49 +216,71 @@ public class DCM_Form extends javax.swing.JFrame {
         inputAtrAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
         inputAtrAmplitude.setFocusable(false);
         inputAtrAmplitude.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputAtrAmplitude.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputAtrPulseWidth.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.4f), Float.valueOf(0.1f), Float.valueOf(1.9f), Float.valueOf(0.1f)));
         inputAtrPulseWidth.setFocusable(false);
         inputAtrPulseWidth.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputAtrPulseWidth.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputAtrSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.75f), Float.valueOf(0.25f), Float.valueOf(10.0f), Float.valueOf(0.5f)));
         inputAtrSensitivity.setFocusable(false);
         inputAtrSensitivity.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputAtrSensitivity.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputVenAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
         inputVenAmplitude.setDoubleBuffered(true);
         inputVenAmplitude.setFocusable(false);
         inputVenAmplitude.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputVenAmplitude.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputVenPulseWidth.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.4f), Float.valueOf(0.1f), Float.valueOf(1.9f), Float.valueOf(0.1f)));
         inputVenPulseWidth.setFocusable(false);
         inputVenPulseWidth.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputVenPulseWidth.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputVenSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(2.5f), Float.valueOf(0.25f), Float.valueOf(10.0f), Float.valueOf(0.5f)));
         inputVenSensitivity.setFocusable(false);
         inputVenSensitivity.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputVenSensitivity.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputVRP.setModel(new javax.swing.SpinnerNumberModel(320, 150, 500, 10));
         inputVRP.setFocusable(false);
         inputVRP.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputVRP.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputARP.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
         inputARP.setFocusable(false);
         inputARP.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputARP.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputPVARP.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
         inputPVARP.setFocusable(false);
         inputPVARP.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputPVARP.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputHystRateLimit.setModel(new javax.swing.SpinnerNumberModel(30, 30, 175, 5));
         inputHystRateLimit.setEnabled(false);
         inputHystRateLimit.setFocusable(false);
         inputHystRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputHystRateLimit.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputSmoothPercent.setModel(new javax.swing.SpinnerNumberModel(5, 0, 25, 1));
         inputSmoothPercent.setEnabled(false);
         inputSmoothPercent.setFocusable(false);
         inputSmoothPercent.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputSmoothPercent.getEditor()).getTextField();
+        tf.setEditable(false);
 
         inputHystEnable.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         inputHystEnable.setText("Enable                                  ");

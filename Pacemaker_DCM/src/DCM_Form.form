@@ -574,7 +574,7 @@
           <SpinnerModel initial="3.5" maximum="7.0" minimum="0.0" numberType="java.lang.Float" stepSize="0.1" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputAtrAmplitude.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -585,7 +585,7 @@
           <SpinnerModel initial="0.4" maximum="1.9" minimum="0.1" numberType="java.lang.Float" stepSize="0.1" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputAtrPulseWidth.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -596,7 +596,7 @@
           <SpinnerModel initial="0.75" maximum="10.0" minimum="0.25" numberType="java.lang.Float" stepSize="0.5" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputAtrSensitivity.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -608,7 +608,7 @@
         </Property>
         <Property name="doubleBuffered" type="boolean" value="true"/>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputVenAmplitude.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -619,7 +619,7 @@
           <SpinnerModel initial="0.4" maximum="1.9" minimum="0.1" numberType="java.lang.Float" stepSize="0.1" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputVenPulseWidth.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -630,7 +630,7 @@
           <SpinnerModel initial="2.5" maximum="10.0" minimum="0.25" numberType="java.lang.Float" stepSize="0.5" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputVenSensitivity.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -641,7 +641,7 @@
           <SpinnerModel initial="320" maximum="500" minimum="150" numberType="java.lang.Integer" stepSize="10" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputVRP.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -652,7 +652,7 @@
           <SpinnerModel initial="250" maximum="500" minimum="150" numberType="java.lang.Integer" stepSize="10" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputARP.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -663,10 +663,13 @@
           <SpinnerModel initial="250" maximum="500" minimum="150" numberType="java.lang.Integer" stepSize="10" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputPVARP.getEditor()).getTextField();">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="tf.setEditable(false);"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JSpinner" name="inputHystRateLimit">
       <Properties>
@@ -675,7 +678,7 @@
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputHystRateLimit.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -687,7 +690,7 @@
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputSmoothPercent.getEditor()).getTextField();&#xa;tf.setEditable(false);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
