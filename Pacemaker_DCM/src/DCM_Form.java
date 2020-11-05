@@ -703,13 +703,13 @@ public class DCM_Form extends javax.swing.JFrame {
         inputLowerRateLimit.setValue(60);
         inputUpperRateLimit.setValue(120);
         
-        inputAtrAmplitude.setValue(5);
-        inputAtrPulseWidth.setValue(1.0);
-        inputAtrSensitivity.setValue(0.75);
+        inputAtrAmplitude.setValue(5.0f);
+        inputAtrPulseWidth.setValue(1.0f);
+        inputAtrSensitivity.setValue(0.75f);
         
-        inputVenAmplitude.setValue(5);
-        inputVenPulseWidth.setValue(1.0);
-        inputVenSensitivity.setValue(2.5);
+        inputVenAmplitude.setValue(5.0f);
+        inputVenPulseWidth.setValue(1.0f);
+        inputVenSensitivity.setValue(2.5f);
         
         inputARP.setValue(320);
         inputVRP.setValue(250);
@@ -720,21 +720,11 @@ public class DCM_Form extends javax.swing.JFrame {
         inputSmoothEnable.setSelected(false);
         inputSmoothPercent.setValue(5);
     }//GEN-LAST:event_buttonLoadNominalActionPerformed
-
-    /**
-     * Reads the user file containing default parameters for each user. The file
-     * is read line by line, and each line is parsed by splitting it into the 
-     * parameter name and value. Each value is assigned to each respective text field
-     * in the user interface.
-     */
-    private void buttonLoadUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadUserDefaultActionPerformed
+    
+    private void loadParamsFromDirectory(String filePathDir) {
         try {
-            // the working directory and the filename
-            String fileDir = System.getProperty("user.dir") + File.separator + "DefaultParameters";
-            fileDir += File.separator + username + ".txt";
-            
             // initializes the reader and the scanner
-            FileReader reader = new FileReader(fileDir);
+            FileReader reader = new FileReader(filePathDir);
             Scanner scanner = new Scanner(reader);
             
             // iterates through text file line by line
@@ -785,37 +775,17 @@ public class DCM_Form extends javax.swing.JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
-
-    private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_buttonLoadSettingsActionPerformed
+    }
     
-//    private void saveParametersToDirectory(String dir) {
-//        initParameters();
-//    }
-    
-    /**
-     * Initializes parameters from the input fields, and then writes the parameters
-     * to a file in a subdirectory (/DefaultParameters/) of the working directory of the program.
-     * If subdirectory doesn't exist, it is created.
-     * File names are in format 'username.txt' to ensure that there is only one copy
-     * of a default parameter set per each user.
-     */
-    private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
-        // rounds data and assigns private instance parameters
+    private void saveParametersToDirectory(String dir, String fileName, String saveType) {
         initParameters();
         try {
-            // text file is just named as username
-            String fileName = username + ".txt";
-
-            // get the working directory for new subdirectory
-            String dir = System.getProperty("user.dir") + File.separator + "DefaultParameters";
-
             // creates directory if it doesn't exist; skips otherwise
+            // notifies user if folder is missing
             if((new File(dir)).mkdir()) {
                 JOptionPane.showMessageDialog(this,
-                    "Default folder missing. New folder created.");
+                        saveType.substring(0, 1).toUpperCase() + saveType.substring(1) 
+                           + " save folder missing. New folder created.");
             }
 
             // write all parameters to file directory
@@ -839,12 +809,64 @@ public class DCM_Form extends javax.swing.JFrame {
             writer.close();
 
             // output message to user to tell them directory which file is saved to
-            JOptionPane.showMessageDialog(this,
-                    "Default values for '" + username + "' successfully saved.");
-
+            JOptionPane.showMessageDialog(this, 
+                    saveType.substring(0, 1).toUpperCase() + saveType.substring(1)
+                            + " values for '" + username + "' successfully saved.");
+            
         } catch(Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Reads the user file containing default parameters for each user. The file
+     * is read line by line, and each line is parsed by splitting it into the 
+     * parameter name and value. Each value is assigned to each respective text field
+     * in the user interface.
+     */
+    private void buttonLoadUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadUserDefaultActionPerformed
+        String filePathDir = System.getProperty("user.dir") 
+                + File.separator + "DefaultParameters" 
+                + File.separator + username + ".txt";
+        
+        if(new File(filePathDir).exists()) {
+            loadParamsFromDirectory(filePathDir);
+        } else {
+            JOptionPane.showMessageDialog(this, "User has no default parameters.");
+        }
+    }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
+
+    /**
+     * 
+     */
+    private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setCurrentDirectory(new File(
+                System.getProperty("user.dir") 
+                        + File.separator + "ExportedParameters"));
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setDialogTitle("Select file to load.");
+        
+        // only perform code when user selects a file; else just do nothing
+        if(fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String filePathDir = fc.getSelectedFile().getAbsolutePath();
+            loadParamsFromDirectory(filePathDir);
+        }
+    }//GEN-LAST:event_buttonLoadSettingsActionPerformed
+    
+    /**
+     * Initializes parameters from the input fields, and then writes the parameters
+     * to a file in a subdirectory (/DefaultParameters/) of the working directory of the program.
+     * If subdirectory doesn't exist, it is created.
+     * File names are in format 'username.txt' to ensure that there is only one copy
+     * of a default parameter set per each user.
+     */
+    private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
+        String fileName = username + ".txt";
+        String dir = System.getProperty("user.dir") + File.separator + "DefaultParameters";
+        String saveType = "Default";
+        
+        saveParametersToDirectory(dir, fileName, saveType);
     }//GEN-LAST:event_buttonSaveUserDefaultActionPerformed
 
     /**
@@ -855,46 +877,12 @@ public class DCM_Form extends javax.swing.JFrame {
      * files are unique even if the same user wrote a file.
      */
     private void buttonExportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonExportSettingsActionPerformed
-        // rounds data and assigns private instance parameters
-        initParameters();
-        try {
-            // generate filename combined from username and unix timestamp
-            String unixTimeStr = String.valueOf(System.currentTimeMillis() / 1000L);
-            String fileName = username + "_" + unixTimeStr + ".txt";
-
-            // get the working directory for new subdirectory
-            String dir = System.getProperty("user.dir") + File.separator + "ExportedParameters";
-
-            // creates directory if it doesn't exist; skips otherwise
-            (new File(dir)).mkdir();
-
-            // write all parameters to file directory
-            FileWriter writer = new FileWriter(new File(dir, fileName));
-            writer.write("p_mode: " + p_mode + "\n");
-            writer.write("p_lower_rate_limit: " + p_lower_rate_limit + "\n");
-            writer.write("p_upper_rate_limit: " + p_upper_rate_limit + "\n");
-            writer.write("p_atr_pulse_amplitude: " + p_atr_pulse_amplitude + "\n");
-            writer.write("p_atr_pulse_width: " + p_atr_pulse_width + "\n");
-            writer.write("p_atr_sensitivity: " + p_atr_sensitivity + "\n");
-            writer.write("p_vent_pulse_amplitude: " + p_vent_pulse_amplitude + "\n");
-            writer.write("p_vent_pulse_width: " + p_vent_pulse_width + "\n");
-            writer.write("p_vent_sensitivity: " + p_vent_sensitivity + "\n");
-            writer.write("p_vrp: " + p_vrp + "\n");
-            writer.write("p_arp: " + p_arp + "\n");
-            writer.write("p_pvarp: " + p_pvarp + "\n");
-            writer.write("p_hysteresis_enable: " + p_hysteresis_enable + "\n");
-            writer.write("p_hysteresis_rate_limit: " + p_hysteresis_rate_limit + "\n");
-            writer.write("p_rate_smoothing_enable: " + p_rate_smoothing_enable + "\n");
-            writer.write("p_rate_smoothing_percent: " + p_rate_smoothing_percent + "\n");
-            writer.close();
-
-            // output message to user to tell them directory which file is saved to
-            JOptionPane.showMessageDialog(this,
-                    "File saved to: " + dir + File.separator + fileName);
-
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+        String unixTimeStr = String.valueOf(System.currentTimeMillis() / 1000L);
+        String fileName = username + "_" + unixTimeStr + ".txt";
+        String dir = System.getProperty("user.dir") + File.separator + "ExportedParameters";
+        String saveType = "Exported";
+        
+        saveParametersToDirectory(dir, fileName, saveType);
     }//GEN-LAST:event_buttonExportSettingsActionPerformed
 
     /**
