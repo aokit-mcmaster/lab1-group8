@@ -54,6 +54,7 @@ public class ASCII_Animation {
                     scanner = new Scanner(listOfFiles[i]);
                     current.next = new Frame(scanner.useDelimiter("\\A").next());
                     current = current.next;
+                    scanner.close();
                 }
                 
                 // the tail's next pointer is head to make it circular
