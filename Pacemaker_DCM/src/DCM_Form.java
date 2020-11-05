@@ -1,6 +1,7 @@
 
 import javax.swing.*;
 import com.fazecast.jSerialComm.SerialPort;
+import java.awt.Color;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -206,30 +207,35 @@ public class DCM_Form extends javax.swing.JFrame {
         inputLowerRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputLowerRateLimit.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputUpperRateLimit.setModel(new javax.swing.SpinnerNumberModel(120, 50, 175, 5));
         inputUpperRateLimit.setFocusable(false);
         inputUpperRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputUpperRateLimit.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputAtrAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
         inputAtrAmplitude.setFocusable(false);
         inputAtrAmplitude.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputAtrAmplitude.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputAtrPulseWidth.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.4f), Float.valueOf(0.1f), Float.valueOf(1.9f), Float.valueOf(0.1f)));
         inputAtrPulseWidth.setFocusable(false);
         inputAtrPulseWidth.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputAtrPulseWidth.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputAtrSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.75f), Float.valueOf(0.25f), Float.valueOf(10.0f), Float.valueOf(0.5f)));
         inputAtrSensitivity.setFocusable(false);
         inputAtrSensitivity.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputAtrSensitivity.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputVenAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
         inputVenAmplitude.setDoubleBuffered(true);
@@ -237,36 +243,42 @@ public class DCM_Form extends javax.swing.JFrame {
         inputVenAmplitude.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputVenAmplitude.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputVenPulseWidth.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.4f), Float.valueOf(0.1f), Float.valueOf(1.9f), Float.valueOf(0.1f)));
         inputVenPulseWidth.setFocusable(false);
         inputVenPulseWidth.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputVenPulseWidth.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputVenSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(2.5f), Float.valueOf(0.25f), Float.valueOf(10.0f), Float.valueOf(0.5f)));
         inputVenSensitivity.setFocusable(false);
         inputVenSensitivity.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputVenSensitivity.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputVRP.setModel(new javax.swing.SpinnerNumberModel(320, 150, 500, 10));
         inputVRP.setFocusable(false);
         inputVRP.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputVRP.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputARP.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
         inputARP.setFocusable(false);
         inputARP.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputARP.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputPVARP.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
         inputPVARP.setFocusable(false);
         inputPVARP.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputPVARP.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputHystRateLimit.setModel(new javax.swing.SpinnerNumberModel(30, 30, 175, 5));
         inputHystRateLimit.setEnabled(false);
@@ -274,6 +286,7 @@ public class DCM_Form extends javax.swing.JFrame {
         inputHystRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputHystRateLimit.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputSmoothPercent.setModel(new javax.swing.SpinnerNumberModel(5, 0, 25, 1));
         inputSmoothPercent.setEnabled(false);
@@ -281,6 +294,7 @@ public class DCM_Form extends javax.swing.JFrame {
         inputSmoothPercent.setPreferredSize(new java.awt.Dimension(25, 26));
         tf = ((JSpinner.DefaultEditor) inputSmoothPercent.getEditor()).getTextField();
         tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputHystEnable.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         inputHystEnable.setText("Enable                                  ");
@@ -639,9 +653,29 @@ public class DCM_Form extends javax.swing.JFrame {
      * This method updates all private instance fields to be sent to pacemaker.
      * All input fields from DCM form is put into instance fields.
      */
-    private void initParameters() {
-        // always check before assigning private instance variables
-        isValidInputFields();
+    private boolean initParameters() {
+        
+        // checks if hysteresis rate limit is larger than lower rate limit
+        if((int) inputHystRateLimit.getValue()
+                > (int) inputLowerRateLimit.getValue()) {
+            // inputHystRateLimit.setValue(inputLowerRateLimit.getValue());
+            JOptionPane.showMessageDialog(this, 
+                    "Hysteresis rate limit cannot be larger than lower rate limit.",
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;   // return false and stop assignment
+        }
+        
+        // checks if lower rate limit is larger than upper rate limit
+        if((int) inputLowerRateLimit.getValue()
+                > (int) inputUpperRateLimit.getValue()) {
+            // inputLowerRateLimit.setValue(inputUpperRateLimit.getValue());
+            JOptionPane.showMessageDialog(this, 
+                    "Lower rate limit cannot be larger than upper rate limit.",
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;   // return false and stop assignment1
+        }
 
         // determining input from jComboBox
         String p_mode_Str = (String) inputPacingModes.getSelectedItem();
@@ -680,31 +714,8 @@ public class DCM_Form extends javax.swing.JFrame {
         p_hysteresis_rate_limit = p_hysteresis_enable ? (int) inputHystRateLimit.getValue() : 0;
         p_rate_smoothing_enable = inputSmoothEnable.isSelected();
         p_rate_smoothing_percent = p_rate_smoothing_enable ? (int) inputSmoothPercent.getValue() : 0;
-    }
-
-    /**
-     * This method should be called before sending to pacemaker.
-     * It checks all values, and if they're outside their respective bounds
-     * or aren't in proper increment, they are rounded to the appropriate value.
-     * Also checks if inputs are valid (only integers/floats); otherwise an
-     * exception is thrown.
-     * @return true if there was an error in input, false otherwise
-     */
-    private boolean isValidInputFields() {
-        boolean valid = true; // returns false by default
-
-        if((int) inputHystRateLimit.getValue()
-                > (int) inputLowerRateLimit.getValue()) {
-            inputHystRateLimit.setValue(inputLowerRateLimit.getValue());
-            valid = false;
-        }
-        if((int) inputLowerRateLimit.getValue()
-                > (int) inputUpperRateLimit.getValue()) {
-            inputLowerRateLimit.setValue(inputUpperRateLimit.getValue());
-            valid = false;
-        }
-
-        return valid;
+        
+        return true;
     }
 
     private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
@@ -792,6 +803,7 @@ public class DCM_Form extends javax.swing.JFrame {
                 if(paramName.equals("p_rate_smoothing_percent"))
                     inputSmoothPercent.setValue(Integer.valueOf(paramValue));
             }
+            
             scanner.close();
             reader.close();  
         } catch (IOException e) {
@@ -800,7 +812,7 @@ public class DCM_Form extends javax.swing.JFrame {
     }
     
     private void saveParametersToDirectory(String dir, String fileName, String saveType) {
-        initParameters();
+        if(!initParameters()) return;
         try {
             // creates directory if it doesn't exist; skips otherwise
             // notifies user if folder is missing
