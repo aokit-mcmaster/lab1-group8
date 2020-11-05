@@ -20,10 +20,12 @@ class Frame {
     }
 }
 
-public class HeartBeatAnimation {
+public class ASCII_Animation {
     
-    public Frame head;
-    private String folderDir;
+    private Frame head;
+    private int frameCount = 0;
+    private volatile int msDelay = 33;
+    private volatile boolean running = false;
     
     /**
      * Constructor method searches for all .txt files in passed folder directory.
@@ -31,11 +33,8 @@ public class HeartBeatAnimation {
      * with each text file string as a node.
      * @param folderDir - directory for ascii .txt files
      */
-    public HeartBeatAnimation(String folderDir) {
+    public ASCII_Animation(String folderDir) {
         try {
-            // assigns folder directory
-            this.folderDir = folderDir;
-            
             // gets folder directory and ensures it exists
             File folder = new File(folderDir);
             if(folder.exists() && folder.isDirectory()) {
@@ -43,17 +42,15 @@ public class HeartBeatAnimation {
                 // gets all text files in directory
                 File[] listOfFiles =  folder.listFiles();
                 Arrays.sort(listOfFiles);   // sorts by number
+                frameCount = listOfFiles.length;
 
-                // intialize scanner
-                Scanner scanner;
-
-                // initialize head
-                scanner = new Scanner(listOfFiles[0]);
+                // intialize scanner and head 
+                Scanner scanner = new Scanner(listOfFiles[0]);
                 head = new Frame(scanner.useDelimiter("\\A").next());
                 Frame current = head;
 
                 // create links for next sequences
-                for(int i=1; i<listOfFiles.length; i++) {
+                for(int i=1; i<frameCount; i++) {
                     scanner = new Scanner(listOfFiles[i]);
                     current.next = new Frame(scanner.useDelimiter("\\A").next());
                     current = current.next;
@@ -74,27 +71,63 @@ public class HeartBeatAnimation {
     
     /**
      * This method starts the animation on a separate thread, as to not stall the program.
-     * This animation is a loop that cyclically iterates through the frames in the animation
-     * sequence.
-     * @param screen - the JTextArea which the ascii art is printed onto.
+     * This animation is an infinite loop that cyclically iterates through 
+     * the frames in the animation sequence. Method .play() must be called to start
+     * the animation sequence.
+     * @param screen - the JTextArea which the ascii art is printed onto
      */
     public void animate(JTextArea screen) {
         new Thread(() -> {
-            try {
-                Frame current = this.head;
-                while(current.next != null) {
+            // sets first frame
+            Frame current = this.head;
+            screen.setText("\n\n" + current.frame);
+            
+            // infinitly loop through animation sequence
+            while(current.next != null) {
+                // only print & iterate when *running*
+                if(running) {
                     screen.setText("\n\n" + current.frame);
                     current = current.next;
-                    Thread.sleep(50);
                 }
-            } catch (InterruptedException ex) {
-                Logger.getLogger(HeartBeatAnimation.class.getName()).log(Level.SEVERE, null, ex);
+                try {
+                    Thread.sleep(msDelay);
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
             }
         }).start();
     }
     
-    public void firstFrame(JTextArea screen) {
-        screen.setText("\n\n" + head.frame);
+    public synchronized void pause() {
+        running = false;
+    }
+    
+    public synchronized void play() {
+        running = true;
+    }
+    
+    public int getframeCount() {
+        return frameCount;
+    }
+    
+    public double getFPS() {
+        return 1/(msDelay/1000);
+    }
+    
+    public synchronized void setDelay(int delay) {
+        msDelay = delay;
+    }
+    
+    public synchronized void setFPS(double fps) {
+        msDelay = (int) ((int) 1000/fps);
+    }
+    
+    public synchronized void increaseSpeed() {
+        setFPS(1.1 * getFPS());
+    }
+    
+    public synchronized void decreaseSpeed() {
+        setFPS(0.9 * getFPS());
     }
 
 }
