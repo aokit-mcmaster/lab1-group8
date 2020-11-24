@@ -3,6 +3,7 @@
  * @organization McMaster University 3K04
  */
 
+import java.io.File;
 import javax.swing.*;
 import java.util.Scanner;
 import java.io.FileWriter;
@@ -17,18 +18,29 @@ public class LoginForm extends javax.swing.JFrame {
     private final String[] USERNAMES = new String[MAX_USER_COUNT];
     private final String[] PASSWORDS = new String[MAX_USER_COUNT];
     private String CURRENT_USER;
-
-    public LoginForm() {
+    
+    private ASCII_Animation anim;
+    
+    public LoginForm() throws InterruptedException {
         initUserData();
         initComponents();
+        
+        // start animation
+        String animationDir = System.getProperty("user.dir")
+                + File.separator + "assets"
+                + File.separator + "heart_animation_ascii";
+        anim = new ASCII_Animation(animationDir);
+        anim.animate(animationScreen);
+        // (new ASCII_Animation(animationDir)).animate(animationScreen);
     }
-
+    
     /* initialize all the components and widgets
      * sets positioning for each component */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        animationScreen = new javax.swing.JTextArea();
         labelTitle = new javax.swing.JLabel();
         labelUsername = new javax.swing.JLabel();
         labelPassword = new javax.swing.JLabel();
@@ -37,10 +49,23 @@ public class LoginForm extends javax.swing.JFrame {
         buttonLogin = new javax.swing.JButton();
         buttonRegister = new javax.swing.JButton();
         buttonRemoveUser = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        buttonToggleAnimation = new javax.swing.JButton();
+        sliderAnimationDelay = new javax.swing.JSlider();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("WELCOME TO PACEMAKER");
         setLocation(new java.awt.Point(0, 0));
         setResizable(false);
+
+        animationScreen.setEditable(false);
+        animationScreen.setColumns(20);
+        animationScreen.setFont(new java.awt.Font("Sazanami Mono", 1, 5)); // NOI18N
+        animationScreen.setLineWrap(true);
+        animationScreen.setRows(5);
+        animationScreen.setAutoscrolls(false);
+        animationScreen.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        animationScreen.setEnabled(false);
 
         labelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         labelTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -56,7 +81,6 @@ public class LoginForm extends javax.swing.JFrame {
                 buttonLoginActionPerformed(evt);
             }
         });
-
         getRootPane().setDefaultButton(buttonLogin);
 
         buttonRegister.setText("Register");
@@ -73,50 +97,95 @@ public class LoginForm extends javax.swing.JFrame {
             }
         });
 
+        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        buttonToggleAnimation.setText("Click me!");
+        buttonToggleAnimation.setFocusPainted(false);
+        buttonToggleAnimation.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonToggleAnimationActionPerformed(evt);
+            }
+        });
+
+        sliderAnimationDelay.setMinimum(1);
+        sliderAnimationDelay.setValue(33);
+        sliderAnimationDelay.setFocusable(false);
+        sliderAnimationDelay.setInverted(true);
+        sliderAnimationDelay.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sliderAnimationDelayStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(animationScreen, javax.swing.GroupLayout.PREFERRED_SIZE, 360, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(buttonToggleAnimation, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(sliderAnimationDelay, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(labelPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(labelPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(labelUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(passwordField))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(labelUsername)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(usernameField))
-                    .addComponent(labelTitle, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(buttonRegister, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(buttonRemoveUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(buttonLogin, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(usernameField, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)
+                            .addComponent(passwordField)))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(labelTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(buttonLogin, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(buttonRegister, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(buttonRemoveUser, javax.swing.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)))
                 .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(labelTitle)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(labelUsername))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(labelPassword))
-                .addGap(18, 18, 18)
-                .addComponent(buttonLogin)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(buttonRegister)
-                    .addComponent(buttonRemoveUser))
-                .addGap(18, 18, 18))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(67, 67, 67)
+                        .addComponent(labelTitle)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(labelUsername))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(labelPassword))
+                        .addGap(18, 18, 18)
+                        .addComponent(buttonLogin)
+                        .addGap(18, 18, 18)
+                        .addComponent(buttonRegister)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonRemoveUser)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(animationScreen, javax.swing.GroupLayout.PREFERRED_SIZE, 360, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(buttonToggleAnimation)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(sliderAnimationDelay, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(jSeparator1))))
+                .addContainerGap())
         );
+
+        animationScreen.getAccessibleContext().setAccessibleDescription("");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -143,6 +212,7 @@ public class LoginForm extends javax.swing.JFrame {
                 FileWriter writer = new FileWriter("userData.txt");
                 writer.write("admin" + " " + "password");
                 writer.close();
+                initUserData(); // THIS MIGHT BE BAD
             } catch(Exception f) {
                 f.printStackTrace();
             }
@@ -281,14 +351,37 @@ public class LoginForm extends javax.swing.JFrame {
         passwordField.setText(null);
     }//GEN-LAST:event_buttonRemoveUserActionPerformed
 
+    /**
+     * Button toggles animation in the text area.
+     */
+    boolean running = false;
+    private void buttonToggleAnimationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonToggleAnimationActionPerformed
+        if(running)
+            anim.pause();
+        else
+            anim.play();
+        running = !running;
+    }//GEN-LAST:event_buttonToggleAnimationActionPerformed
+
+    /**
+     * Slider adjusts the delay between frames of animation sequence.
+     */
+    private void sliderAnimationDelayStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderAnimationDelayStateChanged
+        anim.setDelay(sliderAnimationDelay.getValue());
+    }//GEN-LAST:event_sliderAnimationDelayStateChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextArea animationScreen;
     private javax.swing.JButton buttonLogin;
     private javax.swing.JButton buttonRegister;
     private javax.swing.JButton buttonRemoveUser;
+    private javax.swing.JButton buttonToggleAnimation;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel labelPassword;
     private javax.swing.JLabel labelTitle;
     private javax.swing.JLabel labelUsername;
     private javax.swing.JPasswordField passwordField;
+    private javax.swing.JSlider sliderAnimationDelay;
     private javax.swing.JTextField usernameField;
     // End of variables declaration//GEN-END:variables
 }

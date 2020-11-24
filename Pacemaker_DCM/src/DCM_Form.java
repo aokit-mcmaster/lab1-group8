@@ -1,16 +1,13 @@
 
-import com.fazecast.jSerialComm.SerialPort;
+import javax.swing.*;
+import com.fazecast.jSerialComm.*;
+import java.awt.Color;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/**
- *
- * @author Muntakim
- */
 public class DCM_Form extends javax.swing.JFrame {
 
     // operating modes of pacemaker
@@ -18,31 +15,41 @@ public class DCM_Form extends javax.swing.JFrame {
 
     // paramaters to send to pacemaker
     PACEMAKER_MODE p_mode;
-    float p_lower_rate_limit;
-    float p_upper_rate_limit;
+    int p_lower_rate_limit;
+    int p_upper_rate_limit;
     float p_atr_pulse_amplitude;
     float p_vent_pulse_amplitude;
     float p_atr_pulse_width;
     float p_vent_pulse_width;
     float p_atr_sensitivity;
     float p_vent_sensitivity;
-    float p_vrp;
-    float p_arp;
-    float p_pvarp;
+    int p_vrp;
+    int p_arp;
+    int p_pvarp;
     boolean p_hysteresis_enable;
-    float p_hysteresis_rate_limit;
+    int p_hysteresis_rate_limit;
     boolean p_rate_smoothing_enable;
-    float p_rate_smoothing_percent;
+    int p_rate_smoothing_percent;
 
     // internal boolean field to track when parameters are being sent
     private boolean ADMIN_MODE = false;
-    private boolean IS_CONNECTED = false;
-    
-    // current user
-    String username = "GORDON_RAMSAY";
-    
-    
-    public DCM_Form() {
+
+    // variables for serial commication
+    private volatile boolean IS_CONNECTED = false;
+    private String CONNECTED_PORT_NAME;
+    private Thread nonBlockingReading;
+
+    // current user initialized as "NULL USER"
+    String username = "NULL USER";
+
+    /**
+     * Constructor method for the DCM form.
+     * @param username - sets the username of the DCM form—if username is 'admin',
+     * then ADMIN_MODE is declared true; false otherwise
+     */
+    public DCM_Form(String username) {
+        this.username = username;
+        ADMIN_MODE = username.equals("admin");
         initComponents();
     }
 
@@ -55,6 +62,7 @@ public class DCM_Form extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        JFormattedTextField tf;
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
         jLabel2 = new javax.swing.JLabel();
@@ -79,7 +87,7 @@ public class DCM_Form extends javax.swing.JFrame {
         jLabel26 = new javax.swing.JLabel();
         jLabel27 = new javax.swing.JLabel();
         jLabel28 = new javax.swing.JLabel();
-        pacingModes = new javax.swing.JComboBox<>();
+        inputPacingModes = new javax.swing.JComboBox<>();
         inputLowerRateLimit = new javax.swing.JSpinner();
         inputUpperRateLimit = new javax.swing.JSpinner();
         inputAtrAmplitude = new javax.swing.JSpinner();
@@ -96,7 +104,6 @@ public class DCM_Form extends javax.swing.JFrame {
         inputHystEnable = new javax.swing.JCheckBox();
         inputSmoothEnable = new javax.swing.JCheckBox();
         buttonSendParams = new javax.swing.JButton();
-        portConnectedBox = new javax.swing.JCheckBox();
         portSelectionBox = new javax.swing.JComboBox<>();
         buttonConnectPort = new javax.swing.JButton();
         buttonLogout = new javax.swing.JButton();
@@ -108,6 +115,8 @@ public class DCM_Form extends javax.swing.JFrame {
         buttonSaveUserDefault = new javax.swing.JButton();
         buttonLoadSettings = new javax.swing.JButton();
         buttonExportSettings = new javax.swing.JButton();
+        labelUserConnected = new javax.swing.JLabel();
+        buttonRefreshSerialPorts = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Device Controller-Monitor | Current User: " + username);
@@ -195,79 +204,131 @@ public class DCM_Form extends javax.swing.JFrame {
         jLabel28.setText("Rate Smoothing");
         jLabel28.setPreferredSize(new java.awt.Dimension(180, 16));
 
-        pacingModes.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "AOO", "VOO", "AAI", "VVI" }));
-        pacingModes.setFocusable(false);
+        inputPacingModes.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "AOO", "VOO", "AAI", "VVI" }));
+        inputPacingModes.setFocusable(false);
 
         inputLowerRateLimit.setModel(new javax.swing.SpinnerNumberModel(60, 30, 175, 5));
         inputLowerRateLimit.setFocusable(false);
         inputLowerRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputLowerRateLimit.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputUpperRateLimit.setModel(new javax.swing.SpinnerNumberModel(120, 50, 175, 5));
         inputUpperRateLimit.setFocusable(false);
         inputUpperRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputUpperRateLimit.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputAtrAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
         inputAtrAmplitude.setFocusable(false);
         inputAtrAmplitude.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputAtrAmplitude.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputAtrPulseWidth.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.4f), Float.valueOf(0.1f), Float.valueOf(1.9f), Float.valueOf(0.1f)));
         inputAtrPulseWidth.setFocusable(false);
         inputAtrPulseWidth.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputAtrPulseWidth.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputAtrSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.75f), Float.valueOf(0.25f), Float.valueOf(10.0f), Float.valueOf(0.5f)));
         inputAtrSensitivity.setFocusable(false);
         inputAtrSensitivity.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputAtrSensitivity.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputVenAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
         inputVenAmplitude.setDoubleBuffered(true);
         inputVenAmplitude.setFocusable(false);
         inputVenAmplitude.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputVenAmplitude.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputVenPulseWidth.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.4f), Float.valueOf(0.1f), Float.valueOf(1.9f), Float.valueOf(0.1f)));
         inputVenPulseWidth.setFocusable(false);
         inputVenPulseWidth.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputVenPulseWidth.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputVenSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(2.5f), Float.valueOf(0.25f), Float.valueOf(10.0f), Float.valueOf(0.5f)));
         inputVenSensitivity.setFocusable(false);
         inputVenSensitivity.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputVenSensitivity.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputVRP.setModel(new javax.swing.SpinnerNumberModel(320, 150, 500, 10));
         inputVRP.setFocusable(false);
         inputVRP.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputVRP.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputARP.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
         inputARP.setFocusable(false);
         inputARP.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputARP.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputPVARP.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
         inputPVARP.setFocusable(false);
         inputPVARP.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputPVARP.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputHystRateLimit.setModel(new javax.swing.SpinnerNumberModel(30, 30, 175, 5));
+        inputHystRateLimit.setEnabled(false);
         inputHystRateLimit.setFocusable(false);
         inputHystRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputHystRateLimit.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputSmoothPercent.setModel(new javax.swing.SpinnerNumberModel(5, 0, 25, 1));
+        inputSmoothPercent.setEnabled(false);
         inputSmoothPercent.setFocusable(false);
         inputSmoothPercent.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputSmoothPercent.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
 
         inputHystEnable.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        inputHystEnable.setText(" Enable                                  ");
+        inputHystEnable.setText("Enable                                  ");
         inputHystEnable.setFocusable(false);
         inputHystEnable.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         inputHystEnable.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        inputHystEnable.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                inputHystEnableStateChanged(evt);
+            }
+        });
 
         inputSmoothEnable.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        inputSmoothEnable.setText(" Enable                                  ");
+        inputSmoothEnable.setText("Enable                                  ");
         inputSmoothEnable.setFocusable(false);
         inputSmoothEnable.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         inputSmoothEnable.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        inputSmoothEnable.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                inputSmoothEnableStateChanged(evt);
+            }
+        });
 
         buttonSendParams.setText("Send Current Parameters to Pacemaker");
-
-        portConnectedBox.setBorder(null);
-        portConnectedBox.setEnabled(false);
-        portConnectedBox.setFocusable(false);
+        buttonSendParams.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonSendParamsActionPerformed(evt);
+            }
+        });
 
         SerialPort[] serialPorts = SerialPort.getCommPorts();
         String[] serialPortNames = new String[serialPorts.length];
@@ -279,33 +340,96 @@ public class DCM_Form extends javax.swing.JFrame {
 
         buttonConnectPort.setText("Connect");
         buttonConnectPort.setFocusable(false);
+        buttonConnectPort.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonConnectPortActionPerformed(evt);
+            }
+        });
 
         buttonLogout.setText("Logout");
         buttonLogout.setFocusable(false);
+        buttonLogout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                logout(evt);
+            }
+        });
 
         buttonHelp.setText("Help");
         buttonHelp.setFocusable(false);
+        buttonHelp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonHelpActionPerformed(evt);
+            }
+        });
 
         buttonChangePassword.setText("Change Password");
         buttonChangePassword.setFocusable(false);
+        buttonChangePassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonChangePasswordActionPerformed(evt);
+            }
+        });
 
         buttonEditUser.setText("Edit Users");
         buttonEditUser.setFocusable(false);
+        buttonEditUser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonEditUserActionPerformed(evt);
+            }
+        });
 
         buttonLoadNominal.setText("Load Nominal");
         buttonLoadNominal.setFocusable(false);
+        buttonLoadNominal.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonLoadNominalActionPerformed(evt);
+            }
+        });
 
         buttonLoadUserDefault.setText("Load User's Default");
         buttonLoadUserDefault.setFocusable(false);
+        buttonLoadUserDefault.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonLoadUserDefaultActionPerformed(evt);
+            }
+        });
 
         buttonSaveUserDefault.setText("Save User's Default");
         buttonSaveUserDefault.setFocusable(false);
+        buttonSaveUserDefault.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonSaveUserDefaultActionPerformed(evt);
+            }
+        });
 
         buttonLoadSettings.setText("Load Settings");
         buttonLoadSettings.setFocusable(false);
+        buttonLoadSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonLoadSettingsActionPerformed(evt);
+            }
+        });
 
         buttonExportSettings.setText("Export Settings");
         buttonExportSettings.setFocusable(false);
+        buttonExportSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonExportSettingsActionPerformed(evt);
+            }
+        });
+
+        labelUserConnected.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
+        labelUserConnected.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        labelUserConnected.setText("☒");
+        labelUserConnected.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+
+        buttonRefreshSerialPorts.setText("↻");
+        buttonRefreshSerialPorts.setFocusable(false);
+        buttonRefreshSerialPorts.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonRefreshSerialPortsActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -327,7 +451,7 @@ public class DCM_Form extends javax.swing.JFrame {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(inputLowerRateLimit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(inputUpperRateLimit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(pacingModes, javax.swing.GroupLayout.Alignment.TRAILING, 0, 63, Short.MAX_VALUE))))
+                                    .addComponent(inputPacingModes, javax.swing.GroupLayout.Alignment.TRAILING, 0, 63, Short.MAX_VALUE))))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -399,16 +523,17 @@ public class DCM_Form extends javax.swing.JFrame {
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(6, 6, 6)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(portConnectedBox)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(portSelectionBox, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(buttonConnectPort, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 577, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 577, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(labelUserConnected, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(portSelectionBox, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonRefreshSerialPorts)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonConnectPort, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -441,7 +566,7 @@ public class DCM_Form extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel10)
-                                    .addComponent(pacingModes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(inputPacingModes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel12)
@@ -506,13 +631,13 @@ public class DCM_Form extends javax.swing.JFrame {
                             .addComponent(buttonSendParams))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(portSelectionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(buttonConnectPort)
-                                .addComponent(jLabel3))
-                            .addComponent(portConnectedBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(portSelectionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(buttonConnectPort)
+                            .addComponent(buttonRefreshSerialPorts)
+                            .addComponent(jLabel3)
+                            .addComponent(labelUserConnected))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
@@ -540,39 +665,542 @@ public class DCM_Form extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * @param args the command line arguments
+     * This method updates all private instance fields to be sent to pacemaker.
+     * All input fields from DCM form is put into instance fields.
      */
-//    public static void main(String args[]) {
-//        /* Set the Nimbus look and feel */
-//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-//         */
-//        try {
-//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-//                if ("Nimbus".equals(info.getName())) {
-//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-//                    break;
-//                }
-//            }
-//        } catch (ClassNotFoundException ex) {
-//            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (InstantiationException ex) {
-//            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (IllegalAccessException ex) {
-//            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-//            java.util.logging.Logger.getLogger(DCM_Form.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        }
-//        //</editor-fold>
-//
-//        /* Create and display the form */
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                new DCM_Form().setVisible(true);
-//            }
-//        });
-//    }
+    private boolean initParameters() {
+
+        // checks if hysteresis rate limit is larger than lower rate limit
+        if((int) inputHystRateLimit.getValue()
+                > (int) inputLowerRateLimit.getValue()) {
+            // inputHystRateLimit.setValue(inputLowerRateLimit.getValue());
+            JOptionPane.showMessageDialog(this,
+                    "Hysteresis rate limit cannot be larger than lower rate limit.",
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;   // return false and stop assignment
+        }
+
+        // checks if lower rate limit is larger than upper rate limit
+        if((int) inputLowerRateLimit.getValue()
+                > (int) inputUpperRateLimit.getValue()) {
+            // inputLowerRateLimit.setValue(inputUpperRateLimit.getValue());
+            JOptionPane.showMessageDialog(this,
+                    "Lower rate limit cannot be larger than upper rate limit.",
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;   // return false and stop assignment1
+        }
+
+        // determining input from jComboBox
+        String p_mode_Str = (String) inputPacingModes.getSelectedItem();
+        if(p_mode_Str.equals("AOO"))
+            p_mode = PACEMAKER_MODE.AOO;
+        else if(p_mode_Str.equals("VOO"))
+            p_mode = PACEMAKER_MODE.VOO;
+        else if(p_mode_Str.equals("AAI"))
+            p_mode = PACEMAKER_MODE.AAI;
+        else if(p_mode_Str.equals("VVI"))
+            p_mode = PACEMAKER_MODE.VVI;
+        else {
+            // if no conditions met (jComboBox error or parsing error)
+            p_mode = PACEMAKER_MODE.AOO;
+            System.out.println("ERROR: p_mode default assigned AOO.\n");
+        }
+
+        p_lower_rate_limit = (int) inputLowerRateLimit.getValue();
+        p_upper_rate_limit = (int) inputUpperRateLimit.getValue();
+
+        p_atr_pulse_amplitude = (float) inputAtrAmplitude.getValue();
+        p_atr_pulse_width = (float) inputAtrPulseWidth.getValue();
+        p_atr_sensitivity = (float) inputAtrSensitivity.getValue();
+
+        p_vent_pulse_amplitude = (float) inputVenAmplitude.getValue();
+        p_vent_pulse_width = (float) inputVenPulseWidth.getValue();
+        p_vent_sensitivity = (float) inputVenSensitivity.getValue();
+
+        p_arp = (int) inputARP.getValue();
+        p_vrp = (int) inputVRP.getValue();
+        p_pvarp = (int) inputPVARP.getValue();
+
+        // to make sure hardware gets 0 for hysteresis rate limit and rate smoothing
+        // if respective enables are both unselected
+        p_hysteresis_enable = inputSmoothEnable.isSelected();
+        p_hysteresis_rate_limit = p_hysteresis_enable ? (int) inputHystRateLimit.getValue() : 0;
+        p_rate_smoothing_enable = inputSmoothEnable.isSelected();
+        p_rate_smoothing_percent = p_rate_smoothing_enable ? (int) inputSmoothPercent.getValue() : 0;
+
+        return true;
+    }
+
+    private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
+        initParameters();
+    }//GEN-LAST:event_buttonSendParamsActionPerformed
+
+    /**
+     * This method should be run on a new thread. Method initializes the port
+     * by opening it and adding a data listener. The data listener activates when 
+     * the port receives data. A loading ascii animation was also implemented to let 
+     * user know when it is connecting. After a certain amount of times of trying to
+     * open a port, the method times out and prompts the user accordingly.
+     * @param serialPort - the port to initialize
+     * @return true if successfully connected, false otherwise
+     */
+    private boolean initSerialPort(SerialPort serialPort) {
+        // disable button so user can't spam
+        buttonConnectPort.setEnabled(false);
+
+        // flag to return; by default its true
+        boolean success = true;
+
+        // set port name
+        String portName = serialPort.getSystemPortName();
+
+        // creates loading circle animation
+//         String[] loadingCircleSequence = {"|","/","—","\\"};
+//         String[] loadingCircleSequence = {"▁","▂","▃","▄","▅","▆","▇","█","▇","▆","▅","▄","▃","▁"};
+//         String[] loadingCircleSequence = {"⣾","⣽","⣻","⢿","⡿","⣟","⣯","⣷"};
+        String[] loadingCircleSequence = {"⠈","⠐","⠠","⢀","⡀","⠄","⠂","⠁"};
+        ASCII_Animation loadingCircle = new ASCII_Animation(loadingCircleSequence);
+        loadingCircle.setDelay(100);
+        loadingCircle.play();
+        loadingCircle.animate(labelUserConnected);
+
+        // busy wait until port is open
+        int i = 0;
+        while(!serialPort.openPort()) {
+            // after 10 tries of connecting, give up and throw error
+            System.out.println("Connecting to " + portName + " attempt: " + i);
+            if(i++ >= 10) {
+                success = false;
+                break;
+            }
+        }
+
+        // stop animation
+        loadingCircle.pause();
+
+        // update user intraface to show connection and update instance fields
+        if(success) {
+            // setup a thread to continuously read port on a separate thread
+            nonBlockingReading = new Thread(() -> { nonBlockingReading(serialPort); });
+            
+            // add data listener for event when data is received
+            serialPort.addDataListener(new SerialPortDataListener() {
+                @Override
+                public int getListeningEvents() { return SerialPort.LISTENING_EVENT_DATA_RECEIVED; }
+                @Override
+                public void serialEvent(SerialPortEvent event) {
+                    byte[] newData = event.getReceivedData();
+                    System.out.println("Received data of size: " + newData.length);
+                    for (int i=0; i<newData.length; i++)
+                        System.out.print((char) newData[i]);
+                    System.out.println("\n");
+                }
+            });
+            
+            // initialize port name and IS_CONNECTED flag
+            labelUserConnected.setText("☑");
+            CONNECTED_PORT_NAME = portName;
+            IS_CONNECTED = true;
+            
+            // start the polling thread
+            nonBlockingReading.start();
+        } else {
+            // safely disconnect from the port and prompt user that it is disconnected
+            labelUserConnected.setText("☒");
+            safelyCloseConnectedPorts();
+            JOptionPane.showMessageDialog(this,
+                    "Can't connect to " + portName + ".",
+                    "Connection timeout",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        // enable button again
+        buttonConnectPort.setEnabled(true);
+
+        return success;
+    }
+    
+    /**
+     * This method must be invoked on a separate runnable thread. This method
+     * constantly reads the port while it's open and IS_CONNECTED flag is true.
+     * This method can be interrupted by other methods in DCM_Form.
+     * @param serialPort - the serial port being polled
+     */
+    private void nonBlockingReading(SerialPort serialPort) {
+        String portName = serialPort.getSystemPortName();
+        try {
+            while(serialPort.isOpen() && IS_CONNECTED) {
+                while(serialPort.bytesAvailable() == 0) {
+                    System.out.println("Polling " + portName + "...");
+                    Thread.sleep(1000);   // poll until bytes are available
+                }
+                byte[] readBuffer = new byte[serialPort.bytesAvailable()];
+                int numRead = serialPort.readBytes(readBuffer, readBuffer.length);
+                System.out.println("Read " + numRead + " bytes.");
+            }
+            safelyCloseConnectedPorts();
+        } catch(InterruptedException e) { 
+            System.out.println("Connection to " + portName + " interrupted.");
+        }
+    }
+
+    /**
+     * Method invokes getCommPorts() from jSerialComm, and checks if a port exists
+     * in the list obtained from getCommPorts().
+     * @param portName - the port to check if it exists
+     * @return true if portName is in the list, false otherwise
+     */
+    private boolean isValidSerialPort(String portName) {
+        SerialPort[] serialPorts = SerialPort.getCommPorts();
+        for (int i=0; i<serialPorts.length; i++) {
+            if(portName.equals(serialPorts[i].getSystemPortName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Method refreshes the jComboBox containing all the available serial ports
+     * for user the select.
+     */
+    private void refreshSerialPorts() {
+        SerialPort[] serialPorts = SerialPort.getCommPorts();
+        String[] serialPortNames = new String[serialPorts.length];
+        for (int i=0; i<serialPorts.length; i++) {
+            serialPortNames[i] = serialPorts[i].getSystemPortName();
+        }
+        portSelectionBox.setModel(new javax.swing.DefaultComboBoxModel<>(serialPortNames));
+    }
+
+    /**
+     * Closes all connected ports and removes all data listeners. Refreshes all 
+     * instance fields as well as prompt the user that the connected port was disconnected.
+     */
+    private void safelyCloseConnectedPorts() {
+        String portName = CONNECTED_PORT_NAME;  // temporarily store 
+        if(CONNECTED_PORT_NAME != null) {
+            SerialPort portToClose = SerialPort.getCommPort(CONNECTED_PORT_NAME);
+            portToClose.removeDataListener();
+            portToClose.closePort();
+            while(portToClose.isOpen()) {}  // busy wait
+            CONNECTED_PORT_NAME = null;
+        }
+        if(IS_CONNECTED) {
+            nonBlockingReading.interrupt();
+            IS_CONNECTED = false;
+            JOptionPane.showMessageDialog(this,
+                "Disconnected from " + portName + ".",
+                "Port disconnected",
+                JOptionPane.ERROR_MESSAGE);
+        }
+        labelUserConnected.setText("☒");
+    }
+
+    /**
+     * Method attempts to open a port that user specified from combo box.
+     * This is handled in a separate thread to not stall the program.
+     */
+    private void buttonConnectPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConnectPortActionPerformed
+        // System.out.println(SerialPort.getVersion());
+        String portName = (String) portSelectionBox.getSelectedItem();
+
+        // if for some reason port is no longer available since initialization
+        if(!isValidSerialPort(portName)) {
+            safelyCloseConnectedPorts();
+            JOptionPane.showMessageDialog(this,
+                    portName + " not found.\nCheck refreshed ports from list.",
+                    "Port not found",
+                    JOptionPane.ERROR_MESSAGE);
+            refreshSerialPorts();
+            return; // stop executing method
+        }
+
+        // create serial port after confirming it exists
+        SerialPort serialPort = SerialPort.getCommPort(portName);
+
+        // check if it isn't already connected to same port
+        if(IS_CONNECTED && portName.equals(CONNECTED_PORT_NAME)) {
+            JOptionPane.showMessageDialog(this,
+                    "Already connected to " + portName + ".");
+            return; // stop executing method
+        } else {
+            // if connecting to a new port when connected to a different one
+            safelyCloseConnectedPorts();
+        }
+        
+        // initialize port on a new thread
+        new Thread(() -> { initSerialPort(serialPort); }).start();
+    }//GEN-LAST:event_buttonConnectPortActionPerformed
+
+    /**
+     * Sets all input fields as the default/nominal values for the DCM.
+     * This is for if the user wants to load nominal values and edit from there.
+     */
+    private void buttonLoadNominalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadNominalActionPerformed
+        inputPacingModes.setSelectedIndex(0);
+
+        inputLowerRateLimit.setValue(60);
+        inputUpperRateLimit.setValue(120);
+
+        inputAtrAmplitude.setValue(5.0f);
+        inputAtrPulseWidth.setValue(1.0f);
+        inputAtrSensitivity.setValue(0.75f);
+
+        inputVenAmplitude.setValue(5.0f);
+        inputVenPulseWidth.setValue(1.0f);
+        inputVenSensitivity.setValue(2.5f);
+
+        inputARP.setValue(320);
+        inputVRP.setValue(250);
+        inputPVARP.setValue(250);
+
+        inputHystEnable.setSelected(false);
+        inputHystRateLimit.setValue(30);
+        inputSmoothEnable.setSelected(false);
+        inputSmoothPercent.setValue(5);
+    }//GEN-LAST:event_buttonLoadNominalActionPerformed
+
+    /**
+     * Method reads the file from the specified directory sent as a parameter.
+     * The file is read line by line and the text fields in the user interface
+     * is updated.
+     * @param filePathDir - the file directory to load parameters from
+     */
+    private void loadParamsFromDirectory(String filePathDir) {
+        try {
+            // initializes the reader and the scanner
+            FileReader reader = new FileReader(filePathDir);
+            Scanner scanner = new Scanner(reader);
+
+            // iterates through text file line by line
+            String line, paramName, paramValue;
+            while(scanner.hasNextLine()) {
+                line = scanner.nextLine();
+
+                // splits line into parameter name and value
+                String[] splitLine = line.split(" ");
+                paramName = splitLine[0];
+                paramValue = splitLine[1];
+
+                // checks if parameter name matches respective input field setter
+                if(paramName.equals("p_mode"))
+                    inputPacingModes.setSelectedItem(paramValue);
+                if(paramName.equals("p_lower_rate_limit"))
+                    inputLowerRateLimit.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_upper_rate_limit"))
+                    inputUpperRateLimit.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_atr_pulse_amplitude"))
+                    inputAtrAmplitude.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_atr_pulse_width"))
+                    inputAtrPulseWidth.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_atr_sensitivity"))
+                    inputAtrSensitivity.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_vent_pulse_amplitude"))
+                    inputVenAmplitude.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_vent_pulse_width"))
+                    inputVenPulseWidth.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_vent_sensitivity"))
+                    inputVenSensitivity.setValue(Float.valueOf(paramValue));
+                if(paramName.equals("p_vrp"))
+                    inputARP.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_arp"))
+                    inputVRP.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_pvarp"))
+                    inputPVARP.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_hysteresis_enable"))
+                    inputHystEnable.setSelected(Boolean.parseBoolean(paramValue));
+                if(paramName.equals("p_hysteresis_rate_limit"))
+                    inputHystRateLimit.setValue(Integer.valueOf(paramValue));
+                if(paramName.equals("p_rate_smoothing_enable"))
+                    inputSmoothEnable.setSelected(Boolean.parseBoolean(paramValue));
+                if(paramName.equals("p_rate_smoothing_percent"))
+                    inputSmoothPercent.setValue(Integer.valueOf(paramValue));
+            }
+
+            scanner.close();
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * This method initializes all parameters from the user interface. Then a new
+     * file is created at the directory described by the parameters, The DCM parameters
+     * are then written to the .txt file line by line, which the value type and the value,
+     * separated by a space.
+     * @param dir - the directory of the folder which file is stored in
+     * @param fileName - the name of the file to save
+     * @param saveType - wether the file is exported or a default save
+     */
+    private void saveParametersToDirectory(String dir, String fileName, String saveType) {
+        if(!initParameters()) return;
+        try {
+            // creates directory if it doesn't exist; skips otherwise
+            // notifies user if folder is missing
+            if((new File(dir)).mkdir()) {
+                JOptionPane.showMessageDialog(this,
+                        saveType.substring(0, 1).toUpperCase() + saveType.substring(1)
+                           + " save folder missing. New folder created.");
+            }
+
+            // write all parameters to file directory
+            FileWriter writer = new FileWriter(new File(dir, fileName));
+            writer.write("p_mode " + p_mode + "\n");
+            writer.write("p_lower_rate_limit " + p_lower_rate_limit + "\n");
+            writer.write("p_upper_rate_limit " + p_upper_rate_limit + "\n");
+            writer.write("p_atr_pulse_amplitude " + p_atr_pulse_amplitude + "\n");
+            writer.write("p_atr_pulse_width " + p_atr_pulse_width + "\n");
+            writer.write("p_atr_sensitivity " + p_atr_sensitivity + "\n");
+            writer.write("p_vent_pulse_amplitude " + p_vent_pulse_amplitude + "\n");
+            writer.write("p_vent_pulse_width " + p_vent_pulse_width + "\n");
+            writer.write("p_vent_sensitivity " + p_vent_sensitivity + "\n");
+            writer.write("p_vrp " + p_vrp + "\n");
+            writer.write("p_arp " + p_arp + "\n");
+            writer.write("p_pvarp " + p_pvarp + "\n");
+            writer.write("p_hysteresis_enable " + p_hysteresis_enable + "\n");
+            writer.write("p_hysteresis_rate_limit " + p_hysteresis_rate_limit + "\n");
+            writer.write("p_rate_smoothing_enable " + p_rate_smoothing_enable + "\n");
+            writer.write("p_rate_smoothing_percent " + p_rate_smoothing_percent + "\n");
+            writer.close();
+
+            // output message to user to tell them directory which file is saved to
+            JOptionPane.showMessageDialog(this,
+                    saveType.substring(0, 1).toUpperCase() + saveType.substring(1)
+                            + " values for '" + username + "' successfully saved.");
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Reads the user file containing default parameters for each user. If the 
+     * user has an existing default setting, it is loaded; otherwise, the user
+     * is prompted that they must save default values.
+     */
+    private void buttonLoadUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadUserDefaultActionPerformed
+        String filePathDir = System.getProperty("user.dir")
+                + File.separator + "DefaultParameters"
+                + File.separator + username + ".txt";
+
+        if(new File(filePathDir).exists()) {
+            loadParamsFromDirectory(filePathDir);
+        } else {
+            JOptionPane.showMessageDialog(this, "User has no default parameters.");
+        }
+    }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
+
+    /**
+     * Opens a file chooser window that lets user select the file directory 
+     * which they want to load the parameter values from.
+     */
+    private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setCurrentDirectory(new File(
+                System.getProperty("user.dir")
+                        + File.separator + "ExportedParameters"));
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setDialogTitle("Select file to load.");
+
+        // only perform code when user selects a file; else just do nothing
+        if(fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String filePathDir = fc.getSelectedFile().getAbsolutePath();
+            loadParamsFromDirectory(filePathDir);
+        }
+    }//GEN-LAST:event_buttonLoadSettingsActionPerformed
+
+    /**
+     * Initializes parameters from the input fields, and then writes the parameters
+     * to a file in a subdirectory (/DefaultParameters/) of the working directory of the program.
+     * File names are in format 'username.txt' to ensure that there is only one copy
+     * of a default parameter set per each user.
+     */
+    private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
+        String fileName = username + ".txt";
+        String dir = System.getProperty("user.dir") + File.separator + "DefaultParameters";
+        String saveType = "Default";
+
+        saveParametersToDirectory(dir, fileName, saveType);
+    }//GEN-LAST:event_buttonSaveUserDefaultActionPerformed
+
+    /**
+     * Initializes parameters from the input fields, and then writes the parameters
+     * to a file in a subdirectory (/ExportedParameters/) of the working directory of the program.
+     * File names are in format 'username_unixTimeStamp.txt' to ensure that all
+     * files are unique even if the same user wrote a file.
+     */
+    private void buttonExportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonExportSettingsActionPerformed
+        String unixTimeStr = String.valueOf(System.currentTimeMillis() / 1000L);
+        String fileName = username + "_" + unixTimeStr + ".txt";
+        String dir = System.getProperty("user.dir") + File.separator + "ExportedParameters";
+        String saveType = "Exported";
+
+        saveParametersToDirectory(dir, fileName, saveType);
+    }//GEN-LAST:event_buttonExportSettingsActionPerformed
+
+    /**
+     * Creates single instance of 'EditUserForm'.
+     * Only accessible if user is logged in as administrator.
+     */
+    private void buttonEditUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonEditUserActionPerformed
+        if(ADMIN_MODE) {
+            EditUserForm editUserForm = EditUserForm.getInstance();
+            editUserForm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            editUserForm.setLocationRelativeTo(this);
+            editUserForm.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "Login as admin.");
+        }
+    }//GEN-LAST:event_buttonEditUserActionPerformed
+
+    private void buttonChangePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonChangePasswordActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonChangePasswordActionPerformed
+
+    private void buttonHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonHelpActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_buttonHelpActionPerformed
+
+    /**
+     * Notifies other suspended threads that user logged out.
+     * Classes that handle this form should dispose1 it upon notify() call.
+     */
+    private void logout(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logout
+        nonBlockingReading.interrupt();
+        safelyCloseConnectedPorts();
+        synchronized(this) {
+            notify();
+        }
+        JOptionPane.showMessageDialog(null, "Successfuly logged out.");
+    }//GEN-LAST:event_logout
+
+    /**
+     * If user selects hysteresis, the respective spinner is enabled.
+     * If user deselects it, the spinner is disabled.
+     * Function also is performed upon any state changes to check box from other methods.
+     */
+    private void inputHystEnableStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_inputHystEnableStateChanged
+        inputHystRateLimit.setEnabled(inputHystEnable.isSelected());
+    }//GEN-LAST:event_inputHystEnableStateChanged
+
+    /**
+     * If user selects rate smoothing, the respective spinner is enabled.
+     * If user deselects it, the spinner is disabled.
+     * Function also is performed upon any state changes to check box from other methods.
+     */
+    private void inputSmoothEnableStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_inputSmoothEnableStateChanged
+        inputSmoothPercent.setEnabled(inputSmoothEnable.isSelected());
+    }//GEN-LAST:event_inputSmoothEnableStateChanged
+
+    private void buttonRefreshSerialPortsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRefreshSerialPortsActionPerformed
+        // threadPortConnection.interrupt();
+        safelyCloseConnectedPorts();
+        refreshSerialPorts();
+    }//GEN-LAST:event_buttonRefreshSerialPortsActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonChangePassword;
@@ -584,6 +1212,7 @@ public class DCM_Form extends javax.swing.JFrame {
     private javax.swing.JButton buttonLoadSettings;
     private javax.swing.JButton buttonLoadUserDefault;
     private javax.swing.JButton buttonLogout;
+    private javax.swing.JButton buttonRefreshSerialPorts;
     private javax.swing.JButton buttonSaveUserDefault;
     private javax.swing.JButton buttonSendParams;
     private javax.swing.JSpinner inputARP;
@@ -594,6 +1223,7 @@ public class DCM_Form extends javax.swing.JFrame {
     private javax.swing.JSpinner inputHystRateLimit;
     private javax.swing.JSpinner inputLowerRateLimit;
     private javax.swing.JSpinner inputPVARP;
+    private javax.swing.JComboBox<String> inputPacingModes;
     private javax.swing.JCheckBox inputSmoothEnable;
     private javax.swing.JSpinner inputSmoothPercent;
     private javax.swing.JSpinner inputUpperRateLimit;
@@ -625,8 +1255,7 @@ public class DCM_Form extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JComboBox<String> pacingModes;
-    private javax.swing.JCheckBox portConnectedBox;
+    private javax.swing.JLabel labelUserConnected;
     private javax.swing.JComboBox<String> portSelectionBox;
     // End of variables declaration//GEN-END:variables
 }

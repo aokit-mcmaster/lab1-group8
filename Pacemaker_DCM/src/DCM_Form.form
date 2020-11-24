@@ -47,7 +47,7 @@
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="inputLowerRateLimit" alignment="1" max="32767" attributes="0"/>
                                   <Component id="inputUpperRateLimit" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="pacingModes" alignment="1" pref="63" max="32767" attributes="0"/>
+                                  <Component id="inputPacingModes" alignment="1" pref="63" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -146,18 +146,18 @@
                   <Component id="jLabel2" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="portConnectedBox" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="portSelectionBox" min="-2" pref="100" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="buttonConnectPort" min="-2" pref="100" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jLabel3" max="32767" attributes="0"/>
-                          </Group>
-                          <Component id="jSeparator2" min="-2" pref="577" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="jSeparator2" min="-2" pref="577" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="labelUserConnected" min="-2" pref="26" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="portSelectionBox" min="-2" pref="80" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="buttonRefreshSerialPorts" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="buttonConnectPort" min="-2" pref="80" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jLabel3" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -196,7 +196,7 @@
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel10" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="pacingModes" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="inputPacingModes" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
@@ -283,14 +283,13 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jSeparator2" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="portSelectionBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="buttonConnectPort" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="portConnectedBox" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="portSelectionBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="buttonConnectPort" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="buttonRefreshSerialPorts" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="labelUserConnected" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
@@ -325,6 +324,9 @@
       <Properties>
         <Property name="orientation" type="int" value="1"/>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_CreateCodePre" type="java.lang.String" value="JFormattedTextField tf;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JSeparator" name="jSeparator2">
     </Component>
@@ -527,7 +529,7 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="pacingModes">
+    <Component class="javax.swing.JComboBox" name="inputPacingModes">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
           <StringArray count="4">
@@ -549,7 +551,7 @@
           <SpinnerModel initial="60" maximum="175" minimum="30" numberType="java.lang.Integer" stepSize="5" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputLowerRateLimit.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -560,7 +562,7 @@
           <SpinnerModel initial="120" maximum="175" minimum="50" numberType="java.lang.Integer" stepSize="5" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputUpperRateLimit.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -571,7 +573,7 @@
           <SpinnerModel initial="3.5" maximum="7.0" minimum="0.0" numberType="java.lang.Float" stepSize="0.1" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputAtrAmplitude.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -582,7 +584,7 @@
           <SpinnerModel initial="0.4" maximum="1.9" minimum="0.1" numberType="java.lang.Float" stepSize="0.1" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputAtrPulseWidth.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -593,7 +595,7 @@
           <SpinnerModel initial="0.75" maximum="10.0" minimum="0.25" numberType="java.lang.Float" stepSize="0.5" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputAtrSensitivity.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -605,7 +607,7 @@
         </Property>
         <Property name="doubleBuffered" type="boolean" value="true"/>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputVenAmplitude.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -616,7 +618,7 @@
           <SpinnerModel initial="0.4" maximum="1.9" minimum="0.1" numberType="java.lang.Float" stepSize="0.1" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputVenPulseWidth.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -627,7 +629,7 @@
           <SpinnerModel initial="2.5" maximum="10.0" minimum="0.25" numberType="java.lang.Float" stepSize="0.5" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputVenSensitivity.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -638,7 +640,7 @@
           <SpinnerModel initial="320" maximum="500" minimum="150" numberType="java.lang.Integer" stepSize="10" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputVRP.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -649,7 +651,7 @@
           <SpinnerModel initial="250" maximum="500" minimum="150" numberType="java.lang.Integer" stepSize="10" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputARP.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -660,18 +662,22 @@
           <SpinnerModel initial="250" maximum="500" minimum="150" numberType="java.lang.Integer" stepSize="10" type="number"/>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputPVARP.getEditor()).getTextField();">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="tf.setEditable(false);&#xa;tf.setBackground(Color.white);"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JSpinner" name="inputHystRateLimit">
       <Properties>
         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
           <SpinnerModel initial="30" maximum="175" minimum="30" numberType="java.lang.Integer" stepSize="5" type="number"/>
         </Property>
+        <Property name="enabled" type="boolean" value="false"/>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputHystRateLimit.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -681,8 +687,9 @@
         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
           <SpinnerModel initial="5" maximum="25" minimum="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
         </Property>
+        <Property name="enabled" type="boolean" value="false"/>
         <Property name="focusable" type="boolean" value="false"/>
-        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor" postCode="tf = ((JSpinner.DefaultEditor) inputSmoothPercent.getEditor()).getTextField();&#xa;tf.setEditable(false);&#xa;tf.setBackground(Color.white);">
           <Dimension value="[25, 26]"/>
         </Property>
       </Properties>
@@ -692,36 +699,36 @@
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Dialog" size="12" style="0"/>
         </Property>
-        <Property name="text" type="java.lang.String" value=" Enable                                  "/>
+        <Property name="text" type="java.lang.String" value="Enable                                  "/>
         <Property name="focusable" type="boolean" value="false"/>
         <Property name="horizontalAlignment" type="int" value="2"/>
         <Property name="horizontalTextPosition" type="int" value="2"/>
       </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="inputHystEnableStateChanged"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="inputSmoothEnable">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Dialog" size="12" style="0"/>
         </Property>
-        <Property name="text" type="java.lang.String" value=" Enable                                  "/>
+        <Property name="text" type="java.lang.String" value="Enable                                  "/>
         <Property name="focusable" type="boolean" value="false"/>
         <Property name="horizontalAlignment" type="int" value="2"/>
         <Property name="horizontalTextPosition" type="int" value="2"/>
       </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="inputSmoothEnableStateChanged"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonSendParams">
       <Properties>
         <Property name="text" type="java.lang.String" value="Send Current Parameters to Pacemaker"/>
       </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="portConnectedBox">
-      <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="null"/>
-        </Property>
-        <Property name="enabled" type="boolean" value="false"/>
-        <Property name="focusable" type="boolean" value="false"/>
-      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonSendParamsActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JComboBox" name="portSelectionBox">
       <Properties>
@@ -739,60 +746,112 @@
         <Property name="text" type="java.lang.String" value="Connect"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonConnectPortActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonLogout">
       <Properties>
         <Property name="text" type="java.lang.String" value="Logout"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="logout"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonHelp">
       <Properties>
         <Property name="text" type="java.lang.String" value="Help"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonHelpActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonChangePassword">
       <Properties>
         <Property name="text" type="java.lang.String" value="Change Password"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonChangePasswordActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonEditUser">
       <Properties>
         <Property name="text" type="java.lang.String" value="Edit Users"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonEditUserActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonLoadNominal">
       <Properties>
         <Property name="text" type="java.lang.String" value="Load Nominal"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonLoadNominalActionPerformed"/>
+      </Events>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_SerializeTo" type="java.lang.String" value="DCM_Form_buttonLoadNominal"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JButton" name="buttonLoadUserDefault">
       <Properties>
         <Property name="text" type="java.lang.String" value="Load User&apos;s Default"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonLoadUserDefaultActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonSaveUserDefault">
       <Properties>
         <Property name="text" type="java.lang.String" value="Save User&apos;s Default"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonSaveUserDefaultActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonLoadSettings">
       <Properties>
         <Property name="text" type="java.lang.String" value="Load Settings"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonLoadSettingsActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="buttonExportSettings">
       <Properties>
         <Property name="text" type="java.lang.String" value="Export Settings"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonExportSettingsActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="labelUserConnected">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="14" style="0"/>
+        </Property>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="text" type="java.lang.String" value="&#x2612;"/>
+        <Property name="verticalAlignment" type="int" value="3"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="buttonRefreshSerialPorts">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#x21bb;"/>
+        <Property name="focusable" type="boolean" value="false"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonRefreshSerialPortsActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

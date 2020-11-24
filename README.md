@@ -73,15 +73,15 @@
 
 - start\_pace
 
-## DCM Sample Screenshots
+## DCM Sample Demos
 
 **DCM Login Form**
 
-![](images/DCM_LOGIN-screenshot.png)
+![](images/DCM_LOGIN-preview.gif)
 
 **DCM Registration Form (ADMIN VIEW)**
 
-![](images/DCM_REGISTRATION-screenshot.png)
+![](images/DCM_REGISTRATION-preview.gif)
 
 **DCM Program**
 
