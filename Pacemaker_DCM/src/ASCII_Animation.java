@@ -126,7 +126,6 @@ public class ASCII_Animation {
         new Thread(() -> {
             // sets first frame
             Frame current = this.head;
-            screen.setText("\n\n" + current.frame);
             
             // infinitly loop through animation sequence
             while(current.next != null) {
