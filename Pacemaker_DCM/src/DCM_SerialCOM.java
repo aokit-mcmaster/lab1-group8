@@ -1,9 +1,7 @@
-
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.nio.ByteBuffer;
 
 /*
 PACEMAKER PROTOCOL
@@ -111,7 +109,7 @@ public class DCM_SerialCOM {
                     
                     // TODO: switch/case in here which points to functions
                     if(BUFFER_INDEX >= INPUT_BUFFER.length) {
-                        System.out.println("Received data of size: " + INPUT_BUFFER.length);
+//                        System.out.println("Received data of size: " + INPUT_BUFFER.length);
 //                        for (int i=0; i<inputBuffer.length; i++)
 //                            System.out.print((char)inputBuffer[i]);
                         BUFFER_INDEX = 0;
@@ -209,7 +207,39 @@ public class DCM_SerialCOM {
         return output;
     }
     
-    public void sendPaceMakerCode(int code) {
+    public double[] returnAtrVentSignals() {
+        // send the code to receive atrial and ventricular signals
+        sendPaceMakerCode(READ_ATR_VENT_SIGNAL);
+        
+        // wait until input buffer is fully received
+        while(!RECEIVED) {
+            try {
+                Thread.sleep(10);
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+        }
+        RECEIVED = false; // reset flag after received
+        
+        // inplace reverse because java is big endian and I hate it
+        byte temp;
+        for(int i=0, j=INPUT_BUFFER.length-1; i<j; i++, j--) {
+            temp = INPUT_BUFFER[i];
+            INPUT_BUFFER[i] = INPUT_BUFFER[j];
+            INPUT_BUFFER[j] = temp;
+        }
+        
+        double[] output = new double[2];
+        output[0] = 5 * ByteBuffer.wrap(INPUT_BUFFER).getDouble(8); // atrial data
+        output[1] = 5 * ByteBuffer.wrap(INPUT_BUFFER).getDouble(0); // ventricular data
+        
+        System.out.println("Atr Value: " + output[0]);
+        System.out.println("Ven Value: " + output[1] + "\n");
+        
+        return output;
+    }
+    
+    private void sendPaceMakerCode(int code) {
         if(code < 0 && code >= 256)
             System.out.println("DCM_serialCOM: CODE OUT OF RANGE");
         if(IS_CONNECTED) {
