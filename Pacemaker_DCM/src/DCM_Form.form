@@ -4,7 +4,7 @@
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
     <Property name="title" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-      <Connection code="&quot;Device Controller-Monitor | Current User: &quot; + username" type="code"/>
+      <Connection code="&quot;Device Controller-Monitor | Current User: &quot; + USERNAME" type="code"/>
     </Property>
     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
       <Color id="Default Cursor"/>
@@ -157,7 +157,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="buttonConnectPort" min="-2" pref="80" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jLabel3" max="32767" attributes="0"/>
+                      <Component id="labelPacemakerModel" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -288,7 +288,7 @@
                           <Component id="portSelectionBox" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="buttonConnectPort" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="buttonRefreshSerialPorts" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="labelPacemakerModel" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="labelUserConnected" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -339,10 +339,10 @@
         <Property name="text" type="java.lang.String" value="Device Controller-Monitor"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="jLabel3">
+    <Component class="javax.swing.JLabel" name="labelPacemakerModel">
       <Properties>
         <Property name="horizontalAlignment" type="int" value="11"/>
-        <Property name="text" type="java.lang.String" value="DCM Model # Placeholder"/>
+        <Property name="text" type="java.lang.String" value="DISCONNECTED FROM DEVICE"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel1">
@@ -532,11 +532,17 @@
     <Component class="javax.swing.JComboBox" name="inputPacingModes">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="4">
+          <StringArray count="10">
             <StringItem index="0" value="AOO"/>
             <StringItem index="1" value="VOO"/>
             <StringItem index="2" value="AAI"/>
             <StringItem index="3" value="VVI"/>
+            <StringItem index="4" value="DOO"/>
+            <StringItem index="5" value="AOOR"/>
+            <StringItem index="6" value="VOOR"/>
+            <StringItem index="7" value="AAIR"/>
+            <StringItem index="8" value="VVIR"/>
+            <StringItem index="9" value="DOOR"/>
           </StringArray>
         </Property>
         <Property name="focusable" type="boolean" value="false"/>
@@ -724,7 +730,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="buttonSendParams">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Send Current Parameters to Pacemaker"/>
+        <Property name="text" type="java.lang.String" value="Send Parameters to Pacemaker"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonSendParamsActionPerformed"/>

@@ -11,7 +11,18 @@ import java.util.Scanner;
 public class DCM_Form extends javax.swing.JFrame {
 
     // operating modes of pacemaker
-    enum PACEMAKER_MODE { VOO, AOO, VVI, AAI };
+    enum PACEMAKER_MODE {
+        AOO,
+        VOO,
+        AAI,
+        VVI,
+        DOO,
+        AOOR,
+        VOOR,
+        AAIR,
+        VVIR,
+        DOOR;
+    }
 
     // paramaters to send to pacemaker
     PACEMAKER_MODE p_mode;
@@ -34,13 +45,13 @@ public class DCM_Form extends javax.swing.JFrame {
     // internal boolean field to track when parameters are being sent
     private boolean ADMIN_MODE = false;
 
-    // variables for serial commication
-    private volatile boolean IS_CONNECTED = false;
-    private String CONNECTED_PORT_NAME;
-    private Thread nonBlockingReading;
-
+    // null instance of DCM_SerialCOM
+    // should be instantiated when user presses "connect"
+    private DCM_SerialCOM DCM_SERIAL_COM = DCM_SerialCOM.getInstance();
+    private String MODEL_NUMBER = "";
+    
     // current user initialized as "NULL USER"
-    String username = "NULL USER";
+    String USERNAME = "NULL USER";
 
     /**
      * Constructor method for the DCM form.
@@ -48,9 +59,16 @@ public class DCM_Form extends javax.swing.JFrame {
      * then ADMIN_MODE is declared true; false otherwise
      */
     public DCM_Form(String username) {
-        this.username = username;
+        USERNAME = username;
         ADMIN_MODE = username.equals("admin");
         initComponents();
+        
+        connectingAnimation = new ASCII_Animation(new String[] {"⠈","⠐","⠠","⢀","⡀","⠄","⠂","⠁"});
+        connectingAnimation.setDelay(100);
+        connectingAnimation.pause();
+        connectingAnimation.animate(labelUserConnected);
+        
+        labelUserConnected.setText("☒");
     }
 
     /**
@@ -66,7 +84,7 @@ public class DCM_Form extends javax.swing.JFrame {
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
         jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
+        labelPacemakerModel = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
@@ -119,7 +137,7 @@ public class DCM_Form extends javax.swing.JFrame {
         buttonRefreshSerialPorts = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Device Controller-Monitor | Current User: " + username);
+        setTitle("Device Controller-Monitor | Current User: " + USERNAME);
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setResizable(false);
 
@@ -129,8 +147,8 @@ public class DCM_Form extends javax.swing.JFrame {
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Device Controller-Monitor");
 
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel3.setText("DCM Model # Placeholder");
+        labelPacemakerModel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        labelPacemakerModel.setText("DISCONNECTED FROM DEVICE");
 
         jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -204,7 +222,7 @@ public class DCM_Form extends javax.swing.JFrame {
         jLabel28.setText("Rate Smoothing");
         jLabel28.setPreferredSize(new java.awt.Dimension(180, 16));
 
-        inputPacingModes.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "AOO", "VOO", "AAI", "VVI" }));
+        inputPacingModes.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "AOO", "VOO", "AAI", "VVI", "DOO", "AOOR", "VOOR", "AAIR", "VVIR", "DOOR" }));
         inputPacingModes.setFocusable(false);
 
         inputLowerRateLimit.setModel(new javax.swing.SpinnerNumberModel(60, 30, 175, 5));
@@ -323,7 +341,7 @@ public class DCM_Form extends javax.swing.JFrame {
             }
         });
 
-        buttonSendParams.setText("Send Current Parameters to Pacemaker");
+        buttonSendParams.setText("Send Parameters to Pacemaker");
         buttonSendParams.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 buttonSendParamsActionPerformed(evt);
@@ -533,7 +551,7 @@ public class DCM_Form extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(buttonConnectPort, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(labelPacemakerModel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -636,7 +654,7 @@ public class DCM_Form extends javax.swing.JFrame {
                             .addComponent(portSelectionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(buttonConnectPort)
                             .addComponent(buttonRefreshSerialPorts)
-                            .addComponent(jLabel3)
+                            .addComponent(labelPacemakerModel)
                             .addComponent(labelUserConnected))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jSeparator1)
@@ -669,7 +687,6 @@ public class DCM_Form extends javax.swing.JFrame {
      * All input fields from DCM form is put into instance fields.
      */
     private boolean initParameters() {
-
         // checks if hysteresis rate limit is larger than lower rate limit
         if((int) inputHystRateLimit.getValue()
                 > (int) inputLowerRateLimit.getValue()) {
@@ -693,19 +710,38 @@ public class DCM_Form extends javax.swing.JFrame {
         }
 
         // determining input from jComboBox
-        String p_mode_Str = (String) inputPacingModes.getSelectedItem();
-        if(p_mode_Str.equals("AOO"))
-            p_mode = PACEMAKER_MODE.AOO;
-        else if(p_mode_Str.equals("VOO"))
-            p_mode = PACEMAKER_MODE.VOO;
-        else if(p_mode_Str.equals("AAI"))
-            p_mode = PACEMAKER_MODE.AAI;
-        else if(p_mode_Str.equals("VVI"))
-            p_mode = PACEMAKER_MODE.VVI;
-        else {
-            // if no conditions met (jComboBox error or parsing error)
-            p_mode = PACEMAKER_MODE.AOO;
-            System.out.println("ERROR: p_mode default assigned AOO.\n");
+        String p_mode_string = (String) inputPacingModes.getSelectedItem();
+        switch(p_mode_string) {
+            case "AOO":
+                p_mode = PACEMAKER_MODE.AOO;
+                break;
+            case "VOO":
+                p_mode = PACEMAKER_MODE.VOO;
+                break;
+            case "AAI":
+                p_mode = PACEMAKER_MODE.AAI;
+                break;
+            case "VVI":
+                p_mode = PACEMAKER_MODE.VVI;
+                break;
+            case "DOO":
+                p_mode = PACEMAKER_MODE.DOO;
+                break;
+            case "AOOR":
+                p_mode = PACEMAKER_MODE.AOOR;
+                break;
+            case "VOOR":
+                p_mode = PACEMAKER_MODE.VOOR;
+                break;
+            case "AAIR":
+                p_mode = PACEMAKER_MODE.AAIR;
+                break;
+            case "VVIR":
+                p_mode = PACEMAKER_MODE.VVIR;
+                break;
+            case "DOOR":
+                p_mode = PACEMAKER_MODE.DOOR;
+                break;
         }
 
         p_lower_rate_limit = (int) inputLowerRateLimit.getValue();
@@ -734,124 +770,18 @@ public class DCM_Form extends javax.swing.JFrame {
     }
 
     private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
-        initParameters();
-    }//GEN-LAST:event_buttonSendParamsActionPerformed
-
-    /**
-     * This method should be run on a new thread. Method initializes the port
-     * by opening it and adding a data listener. The data listener activates when 
-     * the port receives data. A loading ascii animation was also implemented to let 
-     * user know when it is connecting. After a certain amount of times of trying to
-     * open a port, the method times out and prompts the user accordingly.
-     * @param serialPort - the port to initialize
-     * @return true if successfully connected, false otherwise
-     */
-    private boolean initSerialPort(SerialPort serialPort) {
-        // disable button so user can't spam
-        buttonConnectPort.setEnabled(false);
-
-        // flag to return; by default its true
-        boolean success = true;
-
-        // set port name
-        String portName = serialPort.getSystemPortName();
-
-        // creates loading circle animation
-//         String[] loadingCircleSequence = {"|","/","—","\\"};
-//         String[] loadingCircleSequence = {"▁","▂","▃","▄","▅","▆","▇","█","▇","▆","▅","▄","▃","▁"};
-//         String[] loadingCircleSequence = {"⣾","⣽","⣻","⢿","⡿","⣟","⣯","⣷"};
-        String[] loadingCircleSequence = {"⠈","⠐","⠠","⢀","⡀","⠄","⠂","⠁"};
-        ASCII_Animation loadingCircle = new ASCII_Animation(loadingCircleSequence);
-        loadingCircle.setDelay(100);
-        loadingCircle.play();
-        loadingCircle.animate(labelUserConnected);
-
-        // busy wait until port is open
-        int i = 0;
-        while(!serialPort.openPort()) {
-            // after 10 tries of connecting, give up and throw error
-            System.out.println("Connecting to " + portName + " attempt: " + i);
-            if(i++ >= 10) {
-                success = false;
-                break;
-            }
-        }
-
-        // stop animation
-        loadingCircle.pause();
-
-        // update user intraface to show connection and update instance fields
-        if(success) {
-            // setup a thread to continuously read port on a separate thread
-            nonBlockingReading = new Thread(() -> { nonBlockingReading(serialPort); });
-            
-            // add data listener for event when data is received
-            serialPort.addDataListener(new SerialPortDataListener() {
-                @Override
-                public int getListeningEvents() { return SerialPort.LISTENING_EVENT_DATA_RECEIVED; }
-                @Override
-                public void serialEvent(SerialPortEvent event) {
-                    byte[] newData = event.getReceivedData();
-                    System.out.println("Received data of size: " + newData.length);
-                    for (int i=0; i<newData.length; i++)
-                        System.out.print((char) newData[i]);
-                    System.out.println("\n");
-                }
-            });
-            
-            // initialize port name and IS_CONNECTED flag
-            labelUserConnected.setText("☑");
-            CONNECTED_PORT_NAME = portName;
-            IS_CONNECTED = true;
-            
-            // start the polling thread
-            nonBlockingReading.start();
+        if(DCM_SERIAL_COM.isConnected()) {
+            initParameters();
         } else {
-            // safely disconnect from the port and prompt user that it is disconnected
-            labelUserConnected.setText("☒");
             safelyCloseConnectedPorts();
             JOptionPane.showMessageDialog(this,
-                    "Can't connect to " + portName + ".",
-                    "Connection timeout",
+                    "Can't send parameters because disconnected from port.",
+                    "Port not connected.",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }//GEN-LAST:event_buttonSendParamsActionPerformed
 
-        // enable button again
-        buttonConnectPort.setEnabled(true);
 
-        return success;
-    }
-    
-    /**
-     * This method must be invoked on a separate runnable thread. This method
-     * constantly reads the port while it's open and IS_CONNECTED flag is true.
-     * This method can be interrupted by other methods in DCM_Form.
-     * @param serialPort - the serial port being polled
-     */
-    private void nonBlockingReading(SerialPort serialPort) {
-        String portName = serialPort.getSystemPortName();
-        try {
-            while(serialPort.isOpen() && IS_CONNECTED) {
-                while(serialPort.bytesAvailable() == 0) {
-                    System.out.println("Polling " + portName + "...");
-                    Thread.sleep(1000);   // poll until bytes are available
-                }
-                byte[] readBuffer = new byte[serialPort.bytesAvailable()];
-                int numRead = serialPort.readBytes(readBuffer, readBuffer.length);
-                System.out.println("Read " + numRead + " bytes.");
-            }
-            safelyCloseConnectedPorts();
-        } catch(InterruptedException e) { 
-            System.out.println("Connection to " + portName + " interrupted.");
-        }
-    }
-
-    /**
-     * Method invokes getCommPorts() from jSerialComm, and checks if a port exists
-     * in the list obtained from getCommPorts().
-     * @param portName - the port to check if it exists
-     * @return true if portName is in the list, false otherwise
-     */
     private boolean isValidSerialPort(String portName) {
         SerialPort[] serialPorts = SerialPort.getCommPorts();
         for (int i=0; i<serialPorts.length; i++) {
@@ -861,7 +791,7 @@ public class DCM_Form extends javax.swing.JFrame {
         }
         return false;
     }
-
+    
     /**
      * Method refreshes the jComboBox containing all the available serial ports
      * for user the select.
@@ -869,71 +799,145 @@ public class DCM_Form extends javax.swing.JFrame {
     private void refreshSerialPorts() {
         SerialPort[] serialPorts = SerialPort.getCommPorts();
         String[] serialPortNames = new String[serialPorts.length];
-        for (int i=0; i<serialPorts.length; i++) {
+        for(int i=0; i<serialPorts.length; i++) {
             serialPortNames[i] = serialPorts[i].getSystemPortName();
         }
         portSelectionBox.setModel(new javax.swing.DefaultComboBoxModel<>(serialPortNames));
     }
 
     /**
-     * Closes all connected ports and removes all data listeners. Refreshes all 
+     * Closes all connected ports and removes all data listeners. Refreshes all
      * instance fields as well as prompt the user that the connected port was disconnected.
      */
     private void safelyCloseConnectedPorts() {
-        String portName = CONNECTED_PORT_NAME;  // temporarily store 
-        if(CONNECTED_PORT_NAME != null) {
-            SerialPort portToClose = SerialPort.getCommPort(CONNECTED_PORT_NAME);
-            portToClose.removeDataListener();
-            portToClose.closePort();
-            while(portToClose.isOpen()) {}  // busy wait
-            CONNECTED_PORT_NAME = null;
-        }
-        if(IS_CONNECTED) {
-            nonBlockingReading.interrupt();
-            IS_CONNECTED = false;
-            JOptionPane.showMessageDialog(this,
-                "Disconnected from " + portName + ".",
-                "Port disconnected",
-                JOptionPane.ERROR_MESSAGE);
-        }
         labelUserConnected.setText("☒");
+        labelPacemakerModel.setText("DISCONNECTED FROM DEVICE");
+        DCM_SERIAL_COM.disconnect();
+        if(DCM_SERIAL_COM.isConnected()) {
+            String portName = DCM_SERIAL_COM.getPortName();
+            DCM_SERIAL_COM.disconnect();
+            JOptionPane.showMessageDialog(null,
+                    "Disconnected from " + portName + ".",
+                    "Port disconnected",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
-    /**
-     * Method attempts to open a port that user specified from combo box.
-     * This is handled in a separate thread to not stall the program.
-     */
     private void buttonConnectPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConnectPortActionPerformed
-        // System.out.println(SerialPort.getVersion());
+    // perform on a separate thread to not stall program
+    // button should be disabled so multiple threads can't be instantiated
+    synchronized(connectingAnimation) {
+    new Thread(() -> {
+            
+        buttonConnectPort.setEnabled(false); // disable so user doesn't spam
+
         String portName = (String) portSelectionBox.getSelectedItem();
+        SerialPort port = SerialPort.getCommPort(portName);
+
+        // loading sequence to indicate to user that DCM is connecting to port
+        connectingAnimation.play();
 
         // if for some reason port is no longer available since initialization
         if(!isValidSerialPort(portName)) {
-            safelyCloseConnectedPorts();
+            connectingAnimation.pause();
+            labelUserConnected.setText("☒");
             JOptionPane.showMessageDialog(this,
                     portName + " not found.\nCheck refreshed ports from list.",
-                    "Port not found",
+                    "Port disconnected.",
                     JOptionPane.ERROR_MESSAGE);
-            refreshSerialPorts();
+            refreshSerialPorts(); // refresh list so user can select again
+            buttonConnectPort.setEnabled(true);
             return; // stop executing method
         }
 
-        // create serial port after confirming it exists
-        SerialPort serialPort = SerialPort.getCommPort(portName);
+        // if already connected to some port
+        if(DCM_SERIAL_COM.isConnected()) {
+            // if trying to connect to already connected port
+            if(portName.equals(DCM_SERIAL_COM.getPortName())) {
+                connectingAnimation.pause();
+                labelUserConnected.setText("☑");
+                JOptionPane.showMessageDialog(this,
+                        "Already connected to " + portName + ".",
+                        "Port disconnected.",
+                        JOptionPane.ERROR_MESSAGE);
+                buttonConnectPort.setEnabled(true);
+                return;
+            } 
+            // trying to connect to a different port
+            else {
+                safelyCloseConnectedPorts();
+            }
+        }
 
-        // check if it isn't already connected to same port
-        if(IS_CONNECTED && portName.equals(CONNECTED_PORT_NAME)) {
+        // initPort will try open the port,
+        // returns false if timeout error occurs when connecting
+        if(!DCM_SERIAL_COM.initPort(port)) {
+            connectingAnimation.pause();
+            labelUserConnected.setText("☒");
             JOptionPane.showMessageDialog(this,
-                    "Already connected to " + portName + ".");
-            return; // stop executing method
-        } else {
-            // if connecting to a new port when connected to a different one
-            safelyCloseConnectedPorts();
+                    "Can't connect to " + portName + ".",
+                    "Connection timeout",
+                    JOptionPane.ERROR_MESSAGE);
+            buttonConnectPort.setEnabled(true);
+            return;
+        }
+
+        // if the pacemaker did NOT send a serial code, it is wrong port
+        String receivedCode = DCM_SERIAL_COM.returnSerialCode();
+        if(receivedCode.isEmpty()) {
+            connectingAnimation.pause();
+            labelUserConnected.setText("☒");
+            DCM_SERIAL_COM.disconnect();
+            JOptionPane.showMessageDialog(this,
+                    "Port open, but can't get serial number.\n" 
+                            + "Could be wrong device/model connected.",
+                    "Connection timeout",
+                    JOptionPane.ERROR_MESSAGE);
+            buttonConnectPort.setEnabled(true);
+            return;
         }
         
-        // initialize port on a new thread
-        new Thread(() -> { initSerialPort(serialPort); }).start();
+        // prompt user that serial port is connected
+        connectingAnimation.pause();
+        labelUserConnected.setText("☑");
+        labelPacemakerModel.setText("Connected to: " 
+                + receivedCode);
+        JOptionPane.showMessageDialog(this,
+                "Connected to " + portName + ".\n" +
+                        ((!receivedCode.equals(MODEL_NUMBER) && !MODEL_NUMBER.isEmpty()) 
+                                ? "Different pacemaker approached." 
+                                : ""));
+        MODEL_NUMBER = receivedCode;
+        buttonConnectPort.setEnabled(true);
+        
+        // start a separate thread that occasionally polls the port
+        new Thread(() -> {
+            while(DCM_SERIAL_COM.isConnected()) {
+                try {
+                    Thread.sleep(1000);
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            safelyCloseConnectedPorts();
+            JOptionPane.showMessageDialog(null,
+                    "Disconnected from " + portName + ".",
+                    "Port disconnected",
+                    JOptionPane.ERROR_MESSAGE);
+        }).start();
+        
+    }).start();
+    }
     }//GEN-LAST:event_buttonConnectPortActionPerformed
+
+    /**
+     * Upon button press, method closes all connected ports then refreshes the
+     * available list of ports.
+     */
+    private void buttonRefreshSerialPortsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRefreshSerialPortsActionPerformed
+        safelyCloseConnectedPorts();
+        refreshSerialPorts();
+    }//GEN-LAST:event_buttonRefreshSerialPortsActionPerformed
 
     /**
      * Sets all input fields as the default/nominal values for the DCM.
@@ -1049,6 +1053,8 @@ public class DCM_Form extends javax.swing.JFrame {
 
             // write all parameters to file directory
             FileWriter writer = new FileWriter(new File(dir, fileName));
+            writer.write("Pacemaker Model Number: " + 
+                    (!MODEL_NUMBER.isEmpty() ? MODEL_NUMBER + "\n" : "NULL\n"));
             writer.write("p_mode " + p_mode + "\n");
             writer.write("p_lower_rate_limit " + p_lower_rate_limit + "\n");
             writer.write("p_upper_rate_limit " + p_upper_rate_limit + "\n");
@@ -1070,7 +1076,7 @@ public class DCM_Form extends javax.swing.JFrame {
             // output message to user to tell them directory which file is saved to
             JOptionPane.showMessageDialog(this,
                     saveType.substring(0, 1).toUpperCase() + saveType.substring(1)
-                            + " values for '" + username + "' successfully saved.");
+                            + " values for '" + USERNAME + "' successfully saved.");
 
         } catch(Exception e) {
             e.printStackTrace();
@@ -1078,14 +1084,14 @@ public class DCM_Form extends javax.swing.JFrame {
     }
 
     /**
-     * Reads the user file containing default parameters for each user. If the 
+     * Reads the user file containing default parameters for each user. If the
      * user has an existing default setting, it is loaded; otherwise, the user
      * is prompted that they must save default values.
      */
     private void buttonLoadUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadUserDefaultActionPerformed
         String filePathDir = System.getProperty("user.dir")
                 + File.separator + "DefaultParameters"
-                + File.separator + username + ".txt";
+                + File.separator + USERNAME + ".txt";
 
         if(new File(filePathDir).exists()) {
             loadParamsFromDirectory(filePathDir);
@@ -1095,15 +1101,18 @@ public class DCM_Form extends javax.swing.JFrame {
     }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
 
     /**
-     * Opens a file chooser window that lets user select the file directory 
+     * Opens a file chooser window that lets user select the file directory
      * which they want to load the parameter values from.
      */
+    @SuppressWarnings("untested")
     private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(
                 System.getProperty("user.dir")
                         + File.separator + "ExportedParameters"));
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+//        Action details = fc.getActionMap().get("viewTypeDetails");
+//        details.actionPerformed(null);
         fc.setDialogTitle("Select file to load.");
 
         // only perform code when user selects a file; else just do nothing
@@ -1120,7 +1129,7 @@ public class DCM_Form extends javax.swing.JFrame {
      * of a default parameter set per each user.
      */
     private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
-        String fileName = username + ".txt";
+        String fileName = USERNAME + ".txt";
         String dir = System.getProperty("user.dir") + File.separator + "DefaultParameters";
         String saveType = "Default";
 
@@ -1135,7 +1144,7 @@ public class DCM_Form extends javax.swing.JFrame {
      */
     private void buttonExportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonExportSettingsActionPerformed
         String unixTimeStr = String.valueOf(System.currentTimeMillis() / 1000L);
-        String fileName = username + "_" + unixTimeStr + ".txt";
+        String fileName = USERNAME + "_" + unixTimeStr + ".txt";
         String dir = System.getProperty("user.dir") + File.separator + "ExportedParameters";
         String saveType = "Exported";
 
@@ -1158,11 +1167,30 @@ public class DCM_Form extends javax.swing.JFrame {
     }//GEN-LAST:event_buttonEditUserActionPerformed
 
     private void buttonChangePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonChangePasswordActionPerformed
-        // TODO add your handling code here:
+        if(ADMIN_MODE) {
+            EGRAM test = EGRAM.getInstance();
+            test.setDefaultCloseOperation(HIDE_ON_CLOSE);
+            test.setLocationRelativeTo(this);
+            test.setVisible(true);
+        } else {
+            // TODO: open change passwords form
+        }
+        
     }//GEN-LAST:event_buttonChangePasswordActionPerformed
 
     private void buttonHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonHelpActionPerformed
-        // TODO add your handling code here:
+        try {
+            String fileName = "help.txt";
+            String filePathDir = System.getProperty("user.dir") + File.separator + fileName;
+            File file = new File(filePathDir);
+            if(file.exists()) {
+                java.awt.Desktop.getDesktop().edit(file);
+            } else {
+                JOptionPane.showMessageDialog(this, "File " + fileName + " not found.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_buttonHelpActionPerformed
 
     /**
@@ -1170,8 +1198,8 @@ public class DCM_Form extends javax.swing.JFrame {
      * Classes that handle this form should dispose1 it upon notify() call.
      */
     private void logout(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logout
-        nonBlockingReading.interrupt();
-        safelyCloseConnectedPorts();
+        if(DCM_SERIAL_COM.isConnected()) 
+            safelyCloseConnectedPorts();
         synchronized(this) {
             notify();
         }
@@ -1196,12 +1224,8 @@ public class DCM_Form extends javax.swing.JFrame {
         inputSmoothPercent.setEnabled(inputSmoothEnable.isSelected());
     }//GEN-LAST:event_inputSmoothEnableStateChanged
 
-    private void buttonRefreshSerialPortsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRefreshSerialPortsActionPerformed
-        // threadPortConnection.interrupt();
-        safelyCloseConnectedPorts();
-        refreshSerialPorts();
-    }//GEN-LAST:event_buttonRefreshSerialPortsActionPerformed
-
+    
+    private ASCII_Animation connectingAnimation;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonChangePassword;
     private javax.swing.JButton buttonConnectPort;
@@ -1248,13 +1272,13 @@ public class DCM_Form extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel28;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JLabel labelPacemakerModel;
     private javax.swing.JLabel labelUserConnected;
     private javax.swing.JComboBox<String> portSelectionBox;
     // End of variables declaration//GEN-END:variables
