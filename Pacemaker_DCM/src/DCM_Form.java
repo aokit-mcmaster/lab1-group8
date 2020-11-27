@@ -1,12 +1,14 @@
-
-import javax.swing.*;
-import com.fazecast.jSerialComm.*;
+import com.fazecast.jSerialComm.SerialPort;
 import java.awt.Color;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
+import javax.swing.JFileChooser;
+import javax.swing.JFormattedTextField;
+import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
 
 public class DCM_Form extends javax.swing.JFrame {
 
@@ -47,7 +49,7 @@ public class DCM_Form extends javax.swing.JFrame {
 
     // null instance of DCM_SerialCOM
     // should be instantiated when user presses "connect"
-    private DCM_SerialCOM DCM_SERIAL_COM = DCM_SerialCOM.getInstance();
+    private DCM_SerialCOM SERIAL_COM = DCM_SerialCOM.getInstance();
     private String MODEL_NUMBER = "";
     
     // current user initialized as "NULL USER"
@@ -107,7 +109,7 @@ public class DCM_Form extends javax.swing.JFrame {
         jLabel28 = new javax.swing.JLabel();
         inputPacingModes = new javax.swing.JComboBox<>();
         inputLowerRateLimit = new javax.swing.JSpinner();
-        inputUpperRateLimit = new javax.swing.JSpinner();
+        inputMaxSensorRate = new javax.swing.JSpinner();
         inputAtrAmplitude = new javax.swing.JSpinner();
         inputAtrPulseWidth = new javax.swing.JSpinner();
         inputAtrSensitivity = new javax.swing.JSpinner();
@@ -182,7 +184,7 @@ public class DCM_Form extends javax.swing.JFrame {
         jLabel12.setText("Lower Rate (ppm)");
 
         jLabel13.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel13.setText("Upper Rate (ppm)");
+        jLabel13.setText("Max Rate (ppm)");
 
         jLabel14.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         jLabel14.setText("Amplitude (V)");
@@ -232,10 +234,10 @@ public class DCM_Form extends javax.swing.JFrame {
         tf.setEditable(false);
         tf.setBackground(Color.white);
 
-        inputUpperRateLimit.setModel(new javax.swing.SpinnerNumberModel(120, 50, 175, 5));
-        inputUpperRateLimit.setFocusable(false);
-        inputUpperRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputUpperRateLimit.getEditor()).getTextField();
+        inputMaxSensorRate.setModel(new javax.swing.SpinnerNumberModel(120, 50, 175, 5));
+        inputMaxSensorRate.setFocusable(false);
+        inputMaxSensorRate.setPreferredSize(new java.awt.Dimension(25, 26));
+        tf = ((JSpinner.DefaultEditor) inputMaxSensorRate.getEditor()).getTextField();
         tf.setEditable(false);
         tf.setBackground(Color.white);
 
@@ -468,7 +470,7 @@ public class DCM_Form extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(inputLowerRateLimit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(inputUpperRateLimit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(inputMaxSensorRate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(inputPacingModes, javax.swing.GroupLayout.Alignment.TRAILING, 0, 63, Short.MAX_VALUE))))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -592,7 +594,7 @@ public class DCM_Form extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel13)
-                                    .addComponent(inputUpperRateLimit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(inputMaxSensorRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel14)
@@ -700,7 +702,7 @@ public class DCM_Form extends javax.swing.JFrame {
 
         // checks if lower rate limit is larger than upper rate limit
         if((int) inputLowerRateLimit.getValue()
-                > (int) inputUpperRateLimit.getValue()) {
+                > (int) inputMaxSensorRate.getValue()) {
             // inputLowerRateLimit.setValue(inputUpperRateLimit.getValue());
             JOptionPane.showMessageDialog(this,
                     "Lower rate limit cannot be larger than upper rate limit.",
@@ -745,7 +747,7 @@ public class DCM_Form extends javax.swing.JFrame {
         }
 
         p_lower_rate_limit = (int) inputLowerRateLimit.getValue();
-        p_upper_rate_limit = (int) inputUpperRateLimit.getValue();
+        p_upper_rate_limit = (int) inputMaxSensorRate.getValue();
 
         p_atr_pulse_amplitude = (float) inputAtrAmplitude.getValue();
         p_atr_pulse_width = (float) inputAtrPulseWidth.getValue();
@@ -770,8 +772,11 @@ public class DCM_Form extends javax.swing.JFrame {
     }
 
     private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
-        if(DCM_SERIAL_COM.isConnected()) {
+        if(SERIAL_COM.isConnected()) {
             initParameters();
+            SERIAL_COM.writeParamaters(0, 175, 300, 5, 5, 5, 5, 30, 30, 500, 500, 175, 3, 50, 16, 16);
+            JOptionPane.showMessageDialog(this,
+                    "Sent parameter data.");
         } else {
             safelyCloseConnectedPorts();
             JOptionPane.showMessageDialog(this,
@@ -781,7 +786,11 @@ public class DCM_Form extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_buttonSendParamsActionPerformed
 
-
+    /**
+     * Checks if a given port name is available in list of ports.
+     * @param portName - name of the port
+     * @return true if it is in, false otherwise.
+     */
     private boolean isValidSerialPort(String portName) {
         SerialPort[] serialPorts = SerialPort.getCommPorts();
         for (int i=0; i<serialPorts.length; i++) {
@@ -812,23 +821,28 @@ public class DCM_Form extends javax.swing.JFrame {
     private void safelyCloseConnectedPorts() {
         labelUserConnected.setText("☒");
         labelPacemakerModel.setText("DISCONNECTED FROM DEVICE");
-        DCM_SERIAL_COM.disconnect();
-        if(DCM_SERIAL_COM.isConnected()) {
-            String portName = DCM_SERIAL_COM.getPortName();
-            DCM_SERIAL_COM.disconnect();
-            JOptionPane.showMessageDialog(null,
+        SERIAL_COM.disconnect();
+        if(SERIAL_COM.isConnected()) {
+            String portName = SERIAL_COM.getPortName();
+            SERIAL_COM.disconnect();
+            JOptionPane.showMessageDialog(this,
                     "Disconnected from " + portName + ".",
                     "Port disconnected",
                     JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * Performs on a separate thread to not stall the program when connecting.
+     * Button is disabled while thread is running so user can't spam.
+     * User is prompted an error and function returns when port is no longer available,
+     * if already connected to the same port, if port initialization fails, and if
+     * serial number can't be obtained within limited tries.
+     * If all checks pass, user is prompted so, and a new thread is launched to
+     * occasionally poll the port to continue to check if it's open.
+    */
     private void buttonConnectPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConnectPortActionPerformed
-    // perform on a separate thread to not stall program
-    // button should be disabled so multiple threads can't be instantiated
-    synchronized(connectingAnimation) {
     new Thread(() -> {
-            
         buttonConnectPort.setEnabled(false); // disable so user doesn't spam
 
         String portName = (String) portSelectionBox.getSelectedItem();
@@ -851,9 +865,9 @@ public class DCM_Form extends javax.swing.JFrame {
         }
 
         // if already connected to some port
-        if(DCM_SERIAL_COM.isConnected()) {
+        if(SERIAL_COM.isConnected()) {
             // if trying to connect to already connected port
-            if(portName.equals(DCM_SERIAL_COM.getPortName())) {
+            if(portName.equals(SERIAL_COM.getPortName())) {
                 connectingAnimation.pause();
                 labelUserConnected.setText("☑");
                 JOptionPane.showMessageDialog(this,
@@ -871,7 +885,7 @@ public class DCM_Form extends javax.swing.JFrame {
 
         // initPort will try open the port,
         // returns false if timeout error occurs when connecting
-        if(!DCM_SERIAL_COM.initPort(port)) {
+        if(!SERIAL_COM.initPort(port)) {
             connectingAnimation.pause();
             labelUserConnected.setText("☒");
             JOptionPane.showMessageDialog(this,
@@ -883,11 +897,11 @@ public class DCM_Form extends javax.swing.JFrame {
         }
 
         // if the pacemaker did NOT send a serial code, it is wrong port
-        String receivedCode = DCM_SERIAL_COM.returnSerialCode();
+        String receivedCode = SERIAL_COM.returnSerialCode();
         if(receivedCode.isEmpty()) {
             connectingAnimation.pause();
             labelUserConnected.setText("☒");
-            DCM_SERIAL_COM.disconnect();
+            SERIAL_COM.disconnect();
             JOptionPane.showMessageDialog(this,
                     "Port open, but can't get serial number.\n" 
                             + "Could be wrong device/model connected.",
@@ -912,7 +926,7 @@ public class DCM_Form extends javax.swing.JFrame {
         
         // start a separate thread that occasionally polls the port
         new Thread(() -> {
-            while(DCM_SERIAL_COM.isConnected()) {
+            while(SERIAL_COM.isConnected()) {
                 try {
                     Thread.sleep(1000);
                 } catch(Exception e) {
@@ -920,14 +934,13 @@ public class DCM_Form extends javax.swing.JFrame {
                 }
             }
             safelyCloseConnectedPorts();
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     "Disconnected from " + portName + ".",
                     "Port disconnected",
                     JOptionPane.ERROR_MESSAGE);
         }).start();
         
     }).start();
-    }
     }//GEN-LAST:event_buttonConnectPortActionPerformed
 
     /**
@@ -947,7 +960,7 @@ public class DCM_Form extends javax.swing.JFrame {
         inputPacingModes.setSelectedIndex(0);
 
         inputLowerRateLimit.setValue(60);
-        inputUpperRateLimit.setValue(120);
+        inputMaxSensorRate.setValue(120);
 
         inputAtrAmplitude.setValue(5.0f);
         inputAtrPulseWidth.setValue(1.0f);
@@ -995,7 +1008,7 @@ public class DCM_Form extends javax.swing.JFrame {
                 if(paramName.equals("p_lower_rate_limit"))
                     inputLowerRateLimit.setValue(Integer.valueOf(paramValue));
                 if(paramName.equals("p_upper_rate_limit"))
-                    inputUpperRateLimit.setValue(Integer.valueOf(paramValue));
+                    inputMaxSensorRate.setValue(Integer.valueOf(paramValue));
                 if(paramName.equals("p_atr_pulse_amplitude"))
                     inputAtrAmplitude.setValue(Float.valueOf(paramValue));
                 if(paramName.equals("p_atr_pulse_width"))
@@ -1104,7 +1117,6 @@ public class DCM_Form extends javax.swing.JFrame {
      * Opens a file chooser window that lets user select the file directory
      * which they want to load the parameter values from.
      */
-    @SuppressWarnings("untested")
     private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(
@@ -1156,28 +1168,29 @@ public class DCM_Form extends javax.swing.JFrame {
      * Only accessible if user is logged in as administrator.
      */
     private void buttonEditUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonEditUserActionPerformed
-        if(ADMIN_MODE) {
-            EditUserForm editUserForm = EditUserForm.getInstance();
-            editUserForm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            editUserForm.setLocationRelativeTo(this);
-            editUserForm.setVisible(true);
-        } else {
+        if(!ADMIN_MODE) {
             JOptionPane.showMessageDialog(this, "Login as admin.");
+            return;
         }
+        
+        EditUserForm editUserForm = EditUserForm.getInstance();
+        editUserForm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        editUserForm.setLocationRelativeTo(this);
+        editUserForm.setVisible(true);
     }//GEN-LAST:event_buttonEditUserActionPerformed
 
     private void buttonChangePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonChangePasswordActionPerformed
-        if(ADMIN_MODE) {
-            EGRAM test = EGRAM.getInstance();
-            test.setDefaultCloseOperation(HIDE_ON_CLOSE);
-            test.setLocationRelativeTo(this);
-            test.setVisible(true);
-        } else {
-            // TODO: open change passwords form
+        if(SERIAL_COM.isConnected()) {
+            EGRAM egram = EGRAM.getInstance();
+            egram.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            egram.setLocationRelativeTo(this);
+            egram.setVisible(true);
         }
-        
     }//GEN-LAST:event_buttonChangePasswordActionPerformed
 
+    /**
+     * Opens text file that should be in local directory named 'help.txt'.
+     */
     private void buttonHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonHelpActionPerformed
         try {
             String fileName = "help.txt";
@@ -1198,7 +1211,7 @@ public class DCM_Form extends javax.swing.JFrame {
      * Classes that handle this form should dispose1 it upon notify() call.
      */
     private void logout(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logout
-        if(DCM_SERIAL_COM.isConnected()) 
+        if(SERIAL_COM.isConnected()) 
             safelyCloseConnectedPorts();
         synchronized(this) {
             notify();
@@ -1224,7 +1237,6 @@ public class DCM_Form extends javax.swing.JFrame {
         inputSmoothPercent.setEnabled(inputSmoothEnable.isSelected());
     }//GEN-LAST:event_inputSmoothEnableStateChanged
 
-    
     private ASCII_Animation connectingAnimation;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonChangePassword;
@@ -1246,11 +1258,11 @@ public class DCM_Form extends javax.swing.JFrame {
     private javax.swing.JCheckBox inputHystEnable;
     private javax.swing.JSpinner inputHystRateLimit;
     private javax.swing.JSpinner inputLowerRateLimit;
+    private javax.swing.JSpinner inputMaxSensorRate;
     private javax.swing.JSpinner inputPVARP;
     private javax.swing.JComboBox<String> inputPacingModes;
     private javax.swing.JCheckBox inputSmoothEnable;
     private javax.swing.JSpinner inputSmoothPercent;
-    private javax.swing.JSpinner inputUpperRateLimit;
     private javax.swing.JSpinner inputVRP;
     private javax.swing.JSpinner inputVenAmplitude;
     private javax.swing.JSpinner inputVenPulseWidth;
