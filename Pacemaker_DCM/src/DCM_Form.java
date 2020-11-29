@@ -1,14 +1,18 @@
 import com.fazecast.jSerialComm.SerialPort;
 import java.awt.Color;
+import java.awt.Font;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
+//import javafx.scene.text.Font;
+import javax.swing.Action;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 
 public class DCM_Form extends javax.swing.JFrame {
 
@@ -386,7 +390,7 @@ public class DCM_Form extends javax.swing.JFrame {
         tf.setEditable(false);
         tf.setBackground(Color.white);
 
-        buttonLoadParamsFromPacemaker.setText("Load Parameters from Pacemaker");
+        buttonLoadParamsFromPacemaker.setText("View Parameters in Pacemaker");
         buttonLoadParamsFromPacemaker.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 buttonLoadParamsFromPacemakerActionPerformed(evt);
@@ -685,47 +689,94 @@ public class DCM_Form extends javax.swing.JFrame {
         return true;
     }
 
+    /**
+     * Initializes parameters 
+     */
     private void buttonSendParamsToPacemakerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsToPacemakerActionPerformed
-        if(SERIAL_COM.isConnected()) {
-            initParameters();
-            boolean success = SERIAL_COM.writeParamaters(
-                    PacingMode,
-                    LowerRateLimit,
-                    FixedAVDelay,
-                    AtrAmplitude,
-                    VentAmplitude,
-                    AtrSensitivity,
-                    VentSensitivity,
-                    AtrPulseWidth,
-                    VentPulseWidth,
-                    VentRefractoryPeriod,
-                    AtrRefractoryPeriod,
-                    MaxSensorRate,
-                    ActivityThreshold,
-                    ReactionTime,
-                    ResponseFactor,
-                    RecoveryTime
-            );
-            if(success) {
-                JOptionPane.showMessageDialog(this,
-                        "Sent parameter data.");
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "Failed to send/verify parameter data.",
-                        "Communication Error.",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
+        if(!SERIAL_COM.isConnected()) {
             safelyCloseConnectedPorts();
             JOptionPane.showMessageDialog(this,
                     "Can't send parameters because disconnected from port.",
                     "Port not connected.",
                     JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if(!initParameters()) {
+            return;
+        }
+
+        boolean success = SERIAL_COM.writeParamaters(
+                PacingMode,
+                LowerRateLimit,
+                FixedAVDelay,
+                AtrAmplitude,
+                VentAmplitude,
+                AtrSensitivity,
+                VentSensitivity,
+                AtrPulseWidth,
+                VentPulseWidth,
+                VentRefractoryPeriod,
+                AtrRefractoryPeriod,
+                MaxSensorRate,
+                ActivityThreshold,
+                ReactionTime,
+                ResponseFactor,
+                RecoveryTime
+        );
+        
+        if(success) {
+            JOptionPane.showMessageDialog(this,
+                    "Sent parameter data.");
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to send/verify parameter data.",
+                    "Communication Error.",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_buttonSendParamsToPacemakerActionPerformed
 
+    /**
+     * Loads the the parameters from the pacemaker and displays them in a dialogue
+     * box for the user to see. It automatically does the conversion from byte to values.
+     */
     private void buttonLoadParamsFromPacemakerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadParamsFromPacemakerActionPerformed
-        // TODO add your handling code here:
+        if(!SERIAL_COM.isConnected()) {
+            JOptionPane.showMessageDialog(this,
+                    "Can't send parameters because disconnected from port.",
+                    "Port not connected.",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        byte[] param = SERIAL_COM.returnPacemakerParameters();
+        
+        String toDisplay = "";
+        toDisplay += String.format("%-25s%s %-5s\n", "PacingMode:", PacingModeList[param[0]], "");
+        toDisplay += String.format("%-25s%d %-5s\n", "LowerRateLimit:", (param[1]&0xFF), "ppm");
+        toDisplay += String.format("%-25s%d %-5s\n", "FixedAVDelay:", (param[2]&0xFF)*10, "ms");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "AtrAmplitude:", (param[3]&0xFF)*0.1, "V");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "VentAmplitude:", (param[4]&0xFF)*0.1, "V");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "AtrSensitivity:", (param[5]&0xFF)*0.1, "mV");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "VentSensitivity:", (param[6]&0xFF)*0.1, "mV");
+        toDisplay += String.format("%-25s%d %-5s\n", "AtrPulseWidth:", (param[7]&0xFF), "ms");
+        toDisplay += String.format("%-25s%d %-5s\n", "VentPulseWidth:", (param[8]&0xFF), "ms");
+        toDisplay += String.format("%-25s%d %-5s\n", "VentRefractoryPeriod:", (param[9]&0xFF)*10, "ms");
+        toDisplay += String.format("%-25s%d %-5s\n", "AtrRefractoryPeriod:", (param[10]&0xFF)*10, "ms");
+        toDisplay += String.format("%-25s%d %-5s\n", "MaxSensorRate:", (param[11]&0xFF), "ppm");
+        toDisplay += String.format("%-25s%s %-5s\n", "ActivityThreshold:", ActivityThresholdList[param[12]], "");
+        toDisplay += String.format("%-25s%d %-5s\n", "ReactionTime:", (param[13]&0xFF), "sec");
+        toDisplay += String.format("%-25s%d %-5s\n", "ResponseFactor:", (param[14]&0xFF), "");
+        toDisplay += String.format("%-25s%d %-5s", "RecoveryTime:", (param[15]&0xFF), "min");
+        
+        JTextArea textArea = new JTextArea(toDisplay);
+        textArea.setEditable(false);
+        textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        
+        JOptionPane.showMessageDialog(this,
+                textArea,
+                "Parameters from Pacemaker",
+                JOptionPane.PLAIN_MESSAGE);
     }//GEN-LAST:event_buttonLoadParamsFromPacemakerActionPerformed
 
     /**
@@ -763,7 +814,7 @@ public class DCM_Form extends javax.swing.JFrame {
     private void safelyCloseConnectedPorts() {
         labelUserConnected.setText("☒");
         labelPacemakerModel.setText("DISCONNECTED FROM DEVICE");
-        buttonViewEGRAM.setEnabled(false);
+        buttonViewEGRAM.setEnabled(false);  // EGRAM is disconnected
         SERIAL_COM.disconnect();
         if(SERIAL_COM.isConnected()) {
             String portName = SERIAL_COM.getPortName();
@@ -1068,11 +1119,15 @@ public class DCM_Form extends javax.swing.JFrame {
                 + File.separator + "DefaultParameters"
                 + File.separator + USERNAME + ".txt";
 
-        if(new File(filePathDir).exists()) {
-            loadParamsFromDirectory(filePathDir);
-        } else {
-            JOptionPane.showMessageDialog(this, "User has no default parameters.");
+        if(!(new File(filePathDir).exists())) {
+            JOptionPane.showMessageDialog(this,
+                    "User has no default parameters.",
+                    "File path not found.",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        
+        loadParamsFromDirectory(filePathDir);
     }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
 
     /**
@@ -1080,18 +1135,29 @@ public class DCM_Form extends javax.swing.JFrame {
      * which they want to load the parameter values from.
      */
     private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
+        String filePathDir = System.getProperty("user.dir")
+                + File.separator + "ExportedParameters";
+        
+        if(!(new File(filePathDir).exists())) {
+            JOptionPane.showMessageDialog(this,
+                    "There are no exported text files.\nTry creating one.",
+                    "File path not found.",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(
                 System.getProperty("user.dir")
                         + File.separator + "ExportedParameters"));
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-//        Action details = fc.getActionMap().get("viewTypeDetails");
-//        details.actionPerformed(null);
+        Action details = fc.getActionMap().get("viewTypeDetails");
+        details.actionPerformed(null);
         fc.setDialogTitle("Select file to load.");
 
         // only perform code when user selects a file; else just do nothing
         if(fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            String filePathDir = fc.getSelectedFile().getAbsolutePath();
+            filePathDir = fc.getSelectedFile().getAbsolutePath();
             loadParamsFromDirectory(filePathDir);
         }
     }//GEN-LAST:event_buttonLoadSettingsActionPerformed
@@ -1161,7 +1227,10 @@ public class DCM_Form extends javax.swing.JFrame {
             if(file.exists()) {
                 java.awt.Desktop.getDesktop().edit(file);
             } else {
-                JOptionPane.showMessageDialog(this, "File " + fileName + " not found.");
+                JOptionPane.showMessageDialog(this,
+                        "File " + fileName + " not found.\nMay have been deleted.",
+                        "File path not found.",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1183,8 +1252,12 @@ public class DCM_Form extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(null, "Successfuly logged out.");
     }//GEN-LAST:event_logout
 
+    /**
+     * Disables all input fields, then enables the ones that are are used by the
+     * current pacing mode.
+     */
     private void enableInputFieldsBasedOnPacingMode() {
-                disableAllInputFields();
+        disableAllInputFields();
         
         inputPacingModes.setEnabled(true); // common to all modes
         inputLowerRateLimit.setEnabled(true); // common to all modes
@@ -1268,6 +1341,9 @@ public class DCM_Form extends javax.swing.JFrame {
         }
     }
     
+    /**
+     * Disables all input fields.
+     */
     private void disableAllInputFields() {
         inputPacingModes.setEnabled(false);
         inputLowerRateLimit.setEnabled(false);
@@ -1287,6 +1363,10 @@ public class DCM_Form extends javax.swing.JFrame {
         inputRecoveryTime.setEnabled(false);
     }
     
+    /**
+     * Action listener that listens upon inputPacingModes item change.
+     * @param evt - ItemEvent object
+     */
     private void inputPacingModesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_inputPacingModesItemStateChanged
         enableInputFieldsBasedOnPacingMode();
     }//GEN-LAST:event_inputPacingModesItemStateChanged

@@ -771,7 +771,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="buttonLoadParamsFromPacemaker">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Load Parameters from Pacemaker"/>
+        <Property name="text" type="java.lang.String" value="View Parameters in Pacemaker"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonLoadParamsFromPacemakerActionPerformed"/>
