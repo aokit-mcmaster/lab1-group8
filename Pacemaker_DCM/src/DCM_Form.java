@@ -291,13 +291,13 @@ public class DCM_Form extends javax.swing.JFrame {
 
         jLabel12.setText("Pulse Width (ms)");
 
-        jLabel13.setText("Sensitivity (mV)");
+        jLabel13.setText("Sensitivity (V)");
 
         jLabel14.setText("Regulated Amplitude (V)");
 
         jLabel15.setText("Pulse Width (ms)");
 
-        jLabel16.setText("Sensitivity (mV)");
+        jLabel16.setText("Sensitivity (V)");
 
         jLabel17.setText("Ventricular (ms)");
 
@@ -757,8 +757,8 @@ public class DCM_Form extends javax.swing.JFrame {
         toDisplay += String.format("%-25s%d %-5s\n", "FixedAVDelay:", (param[2]&0xFF)*10, "ms");
         toDisplay += String.format("%-25s%.1f %-5s\n", "AtrAmplitude:", (param[3]&0xFF)*0.1, "V");
         toDisplay += String.format("%-25s%.1f %-5s\n", "VentAmplitude:", (param[4]&0xFF)*0.1, "V");
-        toDisplay += String.format("%-25s%.1f %-5s\n", "AtrSensitivity:", (param[5]&0xFF)*0.1, "mV");
-        toDisplay += String.format("%-25s%.1f %-5s\n", "VentSensitivity:", (param[6]&0xFF)*0.1, "mV");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "AtrSensitivity:", (param[5]&0xFF)*0.1, "V");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "VentSensitivity:", (param[6]&0xFF)*0.1, "V");
         toDisplay += String.format("%-25s%d %-5s\n", "AtrPulseWidth:", (param[7]&0xFF), "ms");
         toDisplay += String.format("%-25s%d %-5s\n", "VentPulseWidth:", (param[8]&0xFF), "ms");
         toDisplay += String.format("%-25s%d %-5s\n", "VentRefractoryPeriod:", (param[9]&0xFF)*10, "ms");

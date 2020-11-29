@@ -558,7 +558,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel13">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Sensitivity (mV)"/>
+        <Property name="text" type="java.lang.String" value="Sensitivity (V)"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel14">
@@ -573,7 +573,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel16">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Sensitivity (mV)"/>
+        <Property name="text" type="java.lang.String" value="Sensitivity (V)"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel17">
