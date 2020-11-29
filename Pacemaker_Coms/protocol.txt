@@ -3,7 +3,7 @@ PACEMAKER PROTOCOL
 INPUT (17 bytes)
 ---------------
 BYTE	MEANING (units)
-1	code (no unit)
+1	code (no unit, should be 1)
 2	mode (enum)
 3	LRL (ppm)
 4	AV delay (10s of ms)
@@ -40,12 +40,3 @@ bytes 9-16:	zeros
 CODE 5
 bytes 1-8:	atr signal sample (double)
 bytes 9-16:	vent signal sample (double)
-
-CODES
---------------------
-0: read serial number
-1: write parameters
-2: read parameters
-3: read atr signal
-4: read vent signal
-5: read both signals
