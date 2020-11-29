@@ -1,0 +1,42 @@
+PACEMAKER PROTOCOL
+
+INPUT (17 bytes)
+---------------
+BYTE	MEANING (units)
+1	code (no unit, should be 1)
+2	mode (enum)
+3	LRL (ppm)
+4	AV delay (10s of ms)
+5	Atr Amp (0.1 of V)
+6	Vent Amp (0.1 of V)
+7	Atr Sens (0.1 of V)
+8	Vent Sens (0.1 of V)
+9	Atr PW (ms)
+10	Vent PW (ms)
+11	VRP (10s of ms)
+12	ARP (10s of ms)
+13	Max Sens Rate (ppm)
+14	Act Thold (enum)
+15	Reaction Time (sec)
+16	Resp Factor (no unit)
+17	Recover Time (min)
+
+OUTPUT (16 bytes)
+--------------------
+CODE 0
+bytes 1-16:	serial number
+
+CODE 2
+bytes 1-16:	parameters in same order
+
+CODE 3
+bytes 1-8:	atr signal sample (double)
+bytes 9-16:	zeros
+
+CODE 4
+bytes 1-8:	vent signal sample (double)
+bytes 9-16:	zeros
+
+CODE 5
+bytes 1-8:	atr signal sample (double)
+bytes 9-16:	vent signal sample (double)

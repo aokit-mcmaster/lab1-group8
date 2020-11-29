@@ -1,46 +1,54 @@
-
-import javax.swing.*;
-import com.fazecast.jSerialComm.*;
+import com.fazecast.jSerialComm.SerialPort;
 import java.awt.Color;
+import java.awt.Font;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
+//import javafx.scene.text.Font;
+import javax.swing.Action;
+import javax.swing.JFileChooser;
+import javax.swing.JFormattedTextField;
+import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 
 public class DCM_Form extends javax.swing.JFrame {
 
-    // operating modes of pacemaker
-    enum PACEMAKER_MODE { VOO, AOO, VVI, AAI };
+    // pacing modes and their enumerated values
+    private final String[] PacingModeList = {"AOO","VOO","AAI","VVI","DOO","AOOR","VOOR","AAIR","VVIR","DOOR"};
 
-    // paramaters to send to pacemaker
-    PACEMAKER_MODE p_mode;
-    int p_lower_rate_limit;
-    int p_upper_rate_limit;
-    float p_atr_pulse_amplitude;
-    float p_vent_pulse_amplitude;
-    float p_atr_pulse_width;
-    float p_vent_pulse_width;
-    float p_atr_sensitivity;
-    float p_vent_sensitivity;
-    int p_vrp;
-    int p_arp;
-    int p_pvarp;
-    boolean p_hysteresis_enable;
-    int p_hysteresis_rate_limit;
-    boolean p_rate_smoothing_enable;
-    int p_rate_smoothing_percent;
+    // activity thresholds and their enumerated values
+    private final String[] ActivityThresholdList = {"V-Low","Low","Med-Low","Med","Med-High","High","V-High"};
 
-    // internal boolean field to track when parameters are being sent
+    // all parameters
+    private byte PacingMode;
+    private int LowerRateLimit;
+    private int FixedAVDelay;
+    private float AtrAmplitude;
+    private float VentAmplitude;
+    private float AtrSensitivity;
+    private float VentSensitivity;
+    private int AtrPulseWidth;
+    private int VentPulseWidth;
+    private int VentRefractoryPeriod;
+    private int AtrRefractoryPeriod;
+    private int MaxSensorRate;
+    private byte ActivityThreshold;
+    private int ReactionTime;
+    private int ResponseFactor;
+    private int RecoveryTime;
+
+    // variables for privileges and DCM functionality
     private boolean ADMIN_MODE = false;
+    private String MODEL_NUMBER = "";
+    private String USERNAME = "NULL";
 
-    // variables for serial commication
-    private volatile boolean IS_CONNECTED = false;
-    private String CONNECTED_PORT_NAME;
-    private Thread nonBlockingReading;
-
-    // current user initialized as "NULL USER"
-    String username = "NULL USER";
+    // singleton instances of other modules
+    private static DCM_SerialCOM SERIAL_COM = DCM_SerialCOM.getInstance();
+    private static EditUserForm EDIT_USER_FORM = EditUserForm.getInstance();
+    private static EGRAM ELECTROGRAM = EGRAM.getInstance();
 
     /**
      * Constructor method for the DCM form.
@@ -48,9 +56,17 @@ public class DCM_Form extends javax.swing.JFrame {
      * then ADMIN_MODE is declared true; false otherwise
      */
     public DCM_Form(String username) {
-        this.username = username;
+        USERNAME = username;
         ADMIN_MODE = username.equals("admin");
-        initComponents();
+        
+        this.initComponents();
+        this.disableAllInputFields();
+        this.enableInputFieldsBasedOnPacingMode();
+
+        connectingAnimation = new ASCII_Animation(new String[] {"⠈","⠐","⠠","⢀","⡀","⠄","⠂","⠁"});
+        connectingAnimation.setDelay(100);
+        connectingAnimation.pause();
+        connectingAnimation.animate(labelUserConnected);
     }
 
     /**
@@ -65,268 +81,80 @@ public class DCM_Form extends javax.swing.JFrame {
         JFormattedTextField tf;
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
-        jLabel15 = new javax.swing.JLabel();
-        jLabel16 = new javax.swing.JLabel();
-        jLabel19 = new javax.swing.JLabel();
-        jLabel20 = new javax.swing.JLabel();
-        jLabel21 = new javax.swing.JLabel();
-        jLabel22 = new javax.swing.JLabel();
-        jLabel23 = new javax.swing.JLabel();
-        jLabel24 = new javax.swing.JLabel();
-        jLabel26 = new javax.swing.JLabel();
-        jLabel27 = new javax.swing.JLabel();
-        jLabel28 = new javax.swing.JLabel();
-        inputPacingModes = new javax.swing.JComboBox<>();
-        inputLowerRateLimit = new javax.swing.JSpinner();
-        inputUpperRateLimit = new javax.swing.JSpinner();
-        inputAtrAmplitude = new javax.swing.JSpinner();
-        inputAtrPulseWidth = new javax.swing.JSpinner();
-        inputAtrSensitivity = new javax.swing.JSpinner();
-        inputVenAmplitude = new javax.swing.JSpinner();
-        inputVenPulseWidth = new javax.swing.JSpinner();
-        inputVenSensitivity = new javax.swing.JSpinner();
-        inputVRP = new javax.swing.JSpinner();
-        inputARP = new javax.swing.JSpinner();
-        inputPVARP = new javax.swing.JSpinner();
-        inputHystRateLimit = new javax.swing.JSpinner();
-        inputSmoothPercent = new javax.swing.JSpinner();
-        inputHystEnable = new javax.swing.JCheckBox();
-        inputSmoothEnable = new javax.swing.JCheckBox();
-        buttonSendParams = new javax.swing.JButton();
+        labelPacemakerModel = new javax.swing.JLabel();
+        labelUserConnected = new javax.swing.JLabel();
+        buttonSendParamsToPacemaker = new javax.swing.JButton();
         portSelectionBox = new javax.swing.JComboBox<>();
         buttonConnectPort = new javax.swing.JButton();
         buttonLogout = new javax.swing.JButton();
         buttonHelp = new javax.swing.JButton();
-        buttonChangePassword = new javax.swing.JButton();
+        buttonViewEGRAM = new javax.swing.JButton();
         buttonEditUser = new javax.swing.JButton();
         buttonLoadNominal = new javax.swing.JButton();
         buttonLoadUserDefault = new javax.swing.JButton();
         buttonSaveUserDefault = new javax.swing.JButton();
         buttonLoadSettings = new javax.swing.JButton();
         buttonExportSettings = new javax.swing.JButton();
-        labelUserConnected = new javax.swing.JLabel();
         buttonRefreshSerialPorts = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        jLabel15 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
+        jLabel17 = new javax.swing.JLabel();
+        jLabel18 = new javax.swing.JLabel();
+        jLabel19 = new javax.swing.JLabel();
+        jLabel20 = new javax.swing.JLabel();
+        jLabel21 = new javax.swing.JLabel();
+        jLabel22 = new javax.swing.JLabel();
+        inputPacingModes = new javax.swing.JComboBox<>();
+        inputLowerRateLimit = new javax.swing.JSpinner();
+        inputMaxSensorRate = new javax.swing.JSpinner();
+        inputFixedAVDelay = new javax.swing.JSpinner();
+        inputVentRefractoryPeriod = new javax.swing.JSpinner();
+        inputAtrRefractoryPeriod = new javax.swing.JSpinner();
+        inputAtrAmplitude = new javax.swing.JSpinner();
+        inputAtrPulseWidth = new javax.swing.JSpinner();
+        inputAtrSensitivity = new javax.swing.JSpinner();
+        inputVentAmplitude = new javax.swing.JSpinner();
+        inputVentPulseWidth = new javax.swing.JSpinner();
+        inputVentSensitivity = new javax.swing.JSpinner();
+        inputActivityThreshold = new javax.swing.JComboBox<>();
+        inputReactionTime = new javax.swing.JSpinner();
+        inputResponseFactor = new javax.swing.JSpinner();
+        inputRecoveryTime = new javax.swing.JSpinner();
+        buttonLoadParamsFromPacemaker = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Device Controller-Monitor | Current User: " + username);
+        setTitle("Device Controller-Monitor | Current User: " + USERNAME);
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setResizable(false);
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel2.setText("Device Controller-Monitor");
+        labelPacemakerModel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        labelPacemakerModel.setText("DISCONNECTED FROM DEVICE");
 
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel3.setText("DCM Model # Placeholder");
+        labelUserConnected.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        labelUserConnected.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        labelUserConnected.setText("☒");
+        labelUserConnected.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Mode / Rate Limits");
-        jLabel1.setPreferredSize(new java.awt.Dimension(180, 16));
-
-        jLabel6.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel6.setText("Atrial Settings");
-        jLabel6.setPreferredSize(new java.awt.Dimension(180, 16));
-
-        jLabel7.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel7.setText("Ventricular Settings");
-        jLabel7.setPreferredSize(new java.awt.Dimension(180, 16));
-
-        jLabel8.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel8.setText("Refractory Periods");
-        jLabel8.setPreferredSize(new java.awt.Dimension(180, 16));
-
-        jLabel9.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel9.setText("Hysteresis");
-        jLabel9.setPreferredSize(new java.awt.Dimension(180, 16));
-
-        jLabel10.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel10.setText("Pacing Mode");
-
-        jLabel12.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel12.setText("Lower Rate (ppm)");
-
-        jLabel13.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel13.setText("Upper Rate (ppm)");
-
-        jLabel14.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel14.setText("Amplitude (V)");
-
-        jLabel15.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel15.setText("Pulse Width (ms)");
-
-        jLabel16.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel16.setText("Sensitivity (mV)");
-
-        jLabel19.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel19.setText("Amplitude (V)");
-
-        jLabel20.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel20.setText("Pulse Width (ms)");
-
-        jLabel21.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel21.setText("Sensitivity (mV)");
-
-        jLabel22.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel22.setText("Ventricular (ms)");
-
-        jLabel23.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel23.setText("Atrial (ms)");
-
-        jLabel24.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel24.setText("PVARP (ms)");
-
-        jLabel26.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel26.setText("Rate Limit (ppm)");
-
-        jLabel27.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel27.setText("Percent (%)");
-
-        jLabel28.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel28.setText("Rate Smoothing");
-        jLabel28.setPreferredSize(new java.awt.Dimension(180, 16));
-
-        inputPacingModes.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "AOO", "VOO", "AAI", "VVI" }));
-        inputPacingModes.setFocusable(false);
-
-        inputLowerRateLimit.setModel(new javax.swing.SpinnerNumberModel(60, 30, 175, 5));
-        inputLowerRateLimit.setFocusable(false);
-        inputLowerRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputLowerRateLimit.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputUpperRateLimit.setModel(new javax.swing.SpinnerNumberModel(120, 50, 175, 5));
-        inputUpperRateLimit.setFocusable(false);
-        inputUpperRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputUpperRateLimit.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputAtrAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
-        inputAtrAmplitude.setFocusable(false);
-        inputAtrAmplitude.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputAtrAmplitude.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputAtrPulseWidth.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.4f), Float.valueOf(0.1f), Float.valueOf(1.9f), Float.valueOf(0.1f)));
-        inputAtrPulseWidth.setFocusable(false);
-        inputAtrPulseWidth.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputAtrPulseWidth.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputAtrSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.75f), Float.valueOf(0.25f), Float.valueOf(10.0f), Float.valueOf(0.5f)));
-        inputAtrSensitivity.setFocusable(false);
-        inputAtrSensitivity.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputAtrSensitivity.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputVenAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(3.5f), Float.valueOf(0.0f), Float.valueOf(7.0f), Float.valueOf(0.1f)));
-        inputVenAmplitude.setDoubleBuffered(true);
-        inputVenAmplitude.setFocusable(false);
-        inputVenAmplitude.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputVenAmplitude.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputVenPulseWidth.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.4f), Float.valueOf(0.1f), Float.valueOf(1.9f), Float.valueOf(0.1f)));
-        inputVenPulseWidth.setFocusable(false);
-        inputVenPulseWidth.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputVenPulseWidth.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputVenSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(2.5f), Float.valueOf(0.25f), Float.valueOf(10.0f), Float.valueOf(0.5f)));
-        inputVenSensitivity.setFocusable(false);
-        inputVenSensitivity.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputVenSensitivity.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputVRP.setModel(new javax.swing.SpinnerNumberModel(320, 150, 500, 10));
-        inputVRP.setFocusable(false);
-        inputVRP.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputVRP.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputARP.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
-        inputARP.setFocusable(false);
-        inputARP.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputARP.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputPVARP.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
-        inputPVARP.setFocusable(false);
-        inputPVARP.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputPVARP.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputHystRateLimit.setModel(new javax.swing.SpinnerNumberModel(30, 30, 175, 5));
-        inputHystRateLimit.setEnabled(false);
-        inputHystRateLimit.setFocusable(false);
-        inputHystRateLimit.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputHystRateLimit.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputSmoothPercent.setModel(new javax.swing.SpinnerNumberModel(5, 0, 25, 1));
-        inputSmoothPercent.setEnabled(false);
-        inputSmoothPercent.setFocusable(false);
-        inputSmoothPercent.setPreferredSize(new java.awt.Dimension(25, 26));
-        tf = ((JSpinner.DefaultEditor) inputSmoothPercent.getEditor()).getTextField();
-        tf.setEditable(false);
-        tf.setBackground(Color.white);
-
-        inputHystEnable.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        inputHystEnable.setText("Enable                                  ");
-        inputHystEnable.setFocusable(false);
-        inputHystEnable.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        inputHystEnable.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        inputHystEnable.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                inputHystEnableStateChanged(evt);
-            }
-        });
-
-        inputSmoothEnable.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        inputSmoothEnable.setText("Enable                                  ");
-        inputSmoothEnable.setFocusable(false);
-        inputSmoothEnable.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        inputSmoothEnable.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        inputSmoothEnable.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                inputSmoothEnableStateChanged(evt);
-            }
-        });
-
-        buttonSendParams.setText("Send Current Parameters to Pacemaker");
-        buttonSendParams.addActionListener(new java.awt.event.ActionListener() {
+        buttonSendParamsToPacemaker.setText("Send Parameters to Pacemaker");
+        buttonSendParamsToPacemaker.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonSendParamsActionPerformed(evt);
+                buttonSendParamsToPacemakerActionPerformed(evt);
             }
         });
 
@@ -362,11 +190,12 @@ public class DCM_Form extends javax.swing.JFrame {
             }
         });
 
-        buttonChangePassword.setText("Change Password");
-        buttonChangePassword.setFocusable(false);
-        buttonChangePassword.addActionListener(new java.awt.event.ActionListener() {
+        buttonViewEGRAM.setText("View Electrogram");
+        buttonViewEGRAM.setEnabled(false);
+        buttonViewEGRAM.setFocusable(false);
+        buttonViewEGRAM.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonChangePasswordActionPerformed(evt);
+                buttonViewEGRAMActionPerformed(evt);
             }
         });
 
@@ -418,16 +247,153 @@ public class DCM_Form extends javax.swing.JFrame {
             }
         });
 
-        labelUserConnected.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
-        labelUserConnected.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        labelUserConnected.setText("☒");
-        labelUserConnected.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
-
         buttonRefreshSerialPorts.setText("↻");
         buttonRefreshSerialPorts.setFocusable(false);
         buttonRefreshSerialPorts.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 buttonRefreshSerialPortsActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel2.setText("Device Controller-Monitor");
+
+        jLabel3.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel3.setText("Atrial Settings");
+
+        jLabel4.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel4.setText("Mode / Rate Limits");
+
+        jLabel5.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel5.setText("Refractory Periods");
+
+        jLabel6.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel6.setText("Ventricular Settings");
+
+        jLabel7.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel7.setText("Rate Adaptivity");
+
+        jLabel1.setText("Pacing Mode");
+
+        jLabel8.setText("Lower Rate Limit (ppm)");
+
+        jLabel9.setText("Max Sensor Rate (ppm)");
+
+        jLabel10.setText("Fixed AV Delay (ms)");
+
+        jLabel11.setText("Regulated Amplitude (V)");
+
+        jLabel12.setText("Pulse Width (ms)");
+
+        jLabel13.setText("Sensitivity (V)");
+
+        jLabel14.setText("Regulated Amplitude (V)");
+
+        jLabel15.setText("Pulse Width (ms)");
+
+        jLabel16.setText("Sensitivity (V)");
+
+        jLabel17.setText("Ventricular (ms)");
+
+        jLabel18.setText("Atrial (ms)");
+
+        jLabel19.setText("Activity Threshold");
+
+        jLabel20.setText("Reaction Time (sec)");
+
+        jLabel21.setText("Response Factor");
+
+        jLabel22.setText("Recovery Time (min)");
+
+        inputPacingModes.setModel(new javax.swing.DefaultComboBoxModel<>(PacingModeList));
+        inputPacingModes.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                inputPacingModesItemStateChanged(evt);
+            }
+        });
+
+        inputLowerRateLimit.setModel(new javax.swing.SpinnerNumberModel(60, 30, 175, 5));
+        tf = ((JSpinner.DefaultEditor) inputLowerRateLimit.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputMaxSensorRate.setModel(new javax.swing.SpinnerNumberModel(120, 50, 175, 5));
+        tf = ((JSpinner.DefaultEditor) inputMaxSensorRate.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputFixedAVDelay.setModel(new javax.swing.SpinnerNumberModel(150, 70, 300, 10));
+        tf = ((JSpinner.DefaultEditor) inputFixedAVDelay.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputVentRefractoryPeriod.setModel(new javax.swing.SpinnerNumberModel(320, 150, 500, 10));
+        tf = ((JSpinner.DefaultEditor) inputVentRefractoryPeriod.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputAtrRefractoryPeriod.setModel(new javax.swing.SpinnerNumberModel(250, 150, 500, 10));
+        tf = ((JSpinner.DefaultEditor) inputAtrRefractoryPeriod.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputAtrAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(5.0f), Float.valueOf(0.0f), Float.valueOf(5.0f), Float.valueOf(0.1f)));
+        tf = ((JSpinner.DefaultEditor) inputAtrAmplitude.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputAtrPulseWidth.setModel(new javax.swing.SpinnerNumberModel(1, 1, 30, 1));
+        tf = ((JSpinner.DefaultEditor) inputAtrPulseWidth.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputAtrSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.8f), Float.valueOf(0.0f), Float.valueOf(5.0f), Float.valueOf(0.1f)));
+        tf = ((JSpinner.DefaultEditor) inputAtrSensitivity.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputVentAmplitude.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(5.0f), Float.valueOf(0.0f), Float.valueOf(5.0f), Float.valueOf(0.1f)));
+        tf = ((JSpinner.DefaultEditor) inputVentAmplitude.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputVentPulseWidth.setModel(new javax.swing.SpinnerNumberModel(1, 1, 30, 1));
+        tf = ((JSpinner.DefaultEditor) inputVentPulseWidth.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputVentSensitivity.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(2.5f), Float.valueOf(0.0f), Float.valueOf(5.0f), Float.valueOf(0.1f)));
+        tf = ((JSpinner.DefaultEditor) inputVentSensitivity.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputActivityThreshold.setModel(new javax.swing.DefaultComboBoxModel<>(ActivityThresholdList));
+
+        inputReactionTime.setModel(new javax.swing.SpinnerNumberModel(30, 10, 50, 10));
+        tf = ((JSpinner.DefaultEditor) inputReactionTime.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputResponseFactor.setModel(new javax.swing.SpinnerNumberModel(8, 1, 16, 1));
+        tf = ((JSpinner.DefaultEditor) inputResponseFactor.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        inputRecoveryTime.setModel(new javax.swing.SpinnerNumberModel(5, 2, 16, 1));
+        tf = ((JSpinner.DefaultEditor) inputRecoveryTime.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setBackground(Color.white);
+
+        buttonLoadParamsFromPacemaker.setText("View Parameters in Pacemaker");
+        buttonLoadParamsFromPacemaker.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonLoadParamsFromPacemakerActionPerformed(evt);
             }
         });
 
@@ -437,93 +403,9 @@ public class DCM_Form extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel10)
-                                    .addComponent(jLabel12)
-                                    .addComponent(jLabel13))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(inputLowerRateLimit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(inputUpperRateLimit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(inputPacingModes, javax.swing.GroupLayout.Alignment.TRAILING, 0, 63, Short.MAX_VALUE))))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel14)
-                                    .addComponent(jLabel15)
-                                    .addComponent(jLabel16))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(inputAtrSensitivity, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(inputAtrPulseWidth, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
-                                        .addComponent(inputAtrAmplitude, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel19)
-                                    .addComponent(jLabel20)
-                                    .addComponent(jLabel21))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(inputVenSensitivity, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(inputVenPulseWidth, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(inputVenAmplitude, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE))))
-                            .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel22)
-                                    .addComponent(jLabel23)
-                                    .addComponent(jLabel24))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(inputARP, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
-                                    .addComponent(inputVRP, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(inputPVARP, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addGap(6, 6, 6)
-                                            .addComponent(jLabel26)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(inputHystRateLimit, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                    .addComponent(inputHystEnable, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(6, 6, 6)
-                                        .addComponent(jLabel27)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(inputSmoothPercent, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(inputSmoothEnable, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(24, 24, 24)
-                                .addComponent(buttonSendParams, javax.swing.GroupLayout.PREFERRED_SIZE, 372, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 577, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(labelUserConnected, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -533,7 +415,87 @@ public class DCM_Form extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(buttonConnectPort, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(labelPacemakerModel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel9, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 158, Short.MAX_VALUE)
+                                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(inputLowerRateLimit, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(inputPacingModes, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(inputMaxSensorRate, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(inputFixedAVDelay, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addGap(6, 6, 6)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jLabel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(inputVentRefractoryPeriod, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(inputAtrRefractoryPeriod, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(6, 6, 6)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(jLabel12, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(jLabel11, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(inputAtrAmplitude, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(inputAtrPulseWidth, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(inputAtrSensitivity, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(6, 6, 6)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel22, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(jLabel21, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(jLabel20, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(jLabel19, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(inputActivityThreshold, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(inputReactionTime, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(inputResponseFactor, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(inputRecoveryTime, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(6, 6, 6)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel16, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(jLabel14, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(inputVentAmplitude, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(inputVentPulseWidth, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(inputVentSensitivity, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(buttonSendParamsToPacemaker, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(buttonViewEGRAM, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(buttonLoadParamsFromPacemaker, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -543,11 +505,10 @@ public class DCM_Form extends javax.swing.JFrame {
                     .addComponent(buttonLoadNominal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(buttonLoadUserDefault, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(buttonEditUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(buttonChangePassword, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(buttonSaveUserDefault, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(buttonLoadSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(buttonExportSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -558,87 +519,98 @@ public class DCM_Form extends javax.swing.JFrame {
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel7))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel10)
-                                    .addComponent(inputPacingModes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel12)
-                                    .addComponent(inputLowerRateLimit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel13)
-                                    .addComponent(inputUpperRateLimit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel1)
+                                            .addComponent(inputPacingModes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel8)
+                                            .addComponent(inputLowerRateLimit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel9)
+                                            .addComponent(inputMaxSensorRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel10)
+                                            .addComponent(inputFixedAVDelay, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel19)
+                                            .addComponent(inputActivityThreshold, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel20)
+                                            .addComponent(inputReactionTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel21)
+                                            .addComponent(inputResponseFactor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel22)
+                                            .addComponent(inputRecoveryTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel5)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel17)
+                                            .addComponent(inputVentRefractoryPeriod, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel18)
+                                            .addComponent(inputAtrRefractoryPeriod, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(buttonSendParamsToPacemaker)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(buttonLoadParamsFromPacemaker)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(buttonViewEGRAM))))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel14)
+                                    .addComponent(jLabel11)
                                     .addComponent(inputAtrAmplitude, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel15)
+                                    .addComponent(jLabel12)
                                     .addComponent(inputAtrPulseWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel13)
+                                    .addComponent(inputAtrSensitivity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel14)
+                                    .addComponent(inputVentAmplitude, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel15)
+                                    .addComponent(inputVentPulseWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel16)
-                                    .addComponent(inputAtrSensitivity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel19)
-                                    .addComponent(inputVenAmplitude, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel20)
-                                    .addComponent(inputVenPulseWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel21)
-                                    .addComponent(inputVenSensitivity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel22)
-                                    .addComponent(inputVRP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel26)
-                                    .addComponent(inputHystRateLimit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel23)
-                                    .addComponent(inputARP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(inputHystEnable)
-                                    .addComponent(inputSmoothEnable)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel27)
-                                    .addComponent(inputSmoothPercent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel24)
-                                .addComponent(inputPVARP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(buttonSendParams))
+                                    .addComponent(inputVentSensitivity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(portSelectionBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(buttonConnectPort)
                             .addComponent(buttonRefreshSerialPorts)
-                            .addComponent(jLabel3)
-                            .addComponent(labelUserConnected))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(labelPacemakerModel)
+                            .addComponent(labelUserConnected)))
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(buttonLoadNominal)
@@ -652,8 +624,6 @@ public class DCM_Form extends javax.swing.JFrame {
                         .addComponent(buttonExportSettings)
                         .addGap(18, 18, 18)
                         .addComponent(buttonEditUser)
-                        .addGap(4, 4, 4)
-                        .addComponent(buttonChangePassword)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(buttonHelp)
                         .addGap(4, 4, 4)
@@ -669,188 +639,150 @@ public class DCM_Form extends javax.swing.JFrame {
      * All input fields from DCM form is put into instance fields.
      */
     private boolean initParameters() {
-
-        // checks if hysteresis rate limit is larger than lower rate limit
-        if((int) inputHystRateLimit.getValue()
-                > (int) inputLowerRateLimit.getValue()) {
-            // inputHystRateLimit.setValue(inputLowerRateLimit.getValue());
-            JOptionPane.showMessageDialog(this,
-                    "Hysteresis rate limit cannot be larger than lower rate limit.",
-                    "Input Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return false;   // return false and stop assignment
-        }
-
         // checks if lower rate limit is larger than upper rate limit
         if((int) inputLowerRateLimit.getValue()
-                > (int) inputUpperRateLimit.getValue()) {
+                > (int) inputMaxSensorRate.getValue()) {
             // inputLowerRateLimit.setValue(inputUpperRateLimit.getValue());
             JOptionPane.showMessageDialog(this,
                     "Lower rate limit cannot be larger than upper rate limit.",
                     "Input Error",
                     JOptionPane.ERROR_MESSAGE);
-            return false;   // return false and stop assignment1
+            return false;   // return false and stop assignment
         }
 
         // determining input from jComboBox
-        String p_mode_Str = (String) inputPacingModes.getSelectedItem();
-        if(p_mode_Str.equals("AOO"))
-            p_mode = PACEMAKER_MODE.AOO;
-        else if(p_mode_Str.equals("VOO"))
-            p_mode = PACEMAKER_MODE.VOO;
-        else if(p_mode_Str.equals("AAI"))
-            p_mode = PACEMAKER_MODE.AAI;
-        else if(p_mode_Str.equals("VVI"))
-            p_mode = PACEMAKER_MODE.VVI;
-        else {
-            // if no conditions met (jComboBox error or parsing error)
-            p_mode = PACEMAKER_MODE.AOO;
-            System.out.println("ERROR: p_mode default assigned AOO.\n");
-        }
-
-        p_lower_rate_limit = (int) inputLowerRateLimit.getValue();
-        p_upper_rate_limit = (int) inputUpperRateLimit.getValue();
-
-        p_atr_pulse_amplitude = (float) inputAtrAmplitude.getValue();
-        p_atr_pulse_width = (float) inputAtrPulseWidth.getValue();
-        p_atr_sensitivity = (float) inputAtrSensitivity.getValue();
-
-        p_vent_pulse_amplitude = (float) inputVenAmplitude.getValue();
-        p_vent_pulse_width = (float) inputVenPulseWidth.getValue();
-        p_vent_sensitivity = (float) inputVenSensitivity.getValue();
-
-        p_arp = (int) inputARP.getValue();
-        p_vrp = (int) inputVRP.getValue();
-        p_pvarp = (int) inputPVARP.getValue();
-
-        // to make sure hardware gets 0 for hysteresis rate limit and rate smoothing
-        // if respective enables are both unselected
-        p_hysteresis_enable = inputSmoothEnable.isSelected();
-        p_hysteresis_rate_limit = p_hysteresis_enable ? (int) inputHystRateLimit.getValue() : 0;
-        p_rate_smoothing_enable = inputSmoothEnable.isSelected();
-        p_rate_smoothing_percent = p_rate_smoothing_enable ? (int) inputSmoothPercent.getValue() : 0;
-
-        return true;
-    }
-
-    private void buttonSendParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsActionPerformed
-        initParameters();
-    }//GEN-LAST:event_buttonSendParamsActionPerformed
-
-    /**
-     * This method should be run on a new thread. Method initializes the port
-     * by opening it and adding a data listener. The data listener activates when 
-     * the port receives data. A loading ascii animation was also implemented to let 
-     * user know when it is connecting. After a certain amount of times of trying to
-     * open a port, the method times out and prompts the user accordingly.
-     * @param serialPort - the port to initialize
-     * @return true if successfully connected, false otherwise
-     */
-    private boolean initSerialPort(SerialPort serialPort) {
-        // disable button so user can't spam
-        buttonConnectPort.setEnabled(false);
-
-        // flag to return; by default its true
-        boolean success = true;
-
-        // set port name
-        String portName = serialPort.getSystemPortName();
-
-        // creates loading circle animation
-//         String[] loadingCircleSequence = {"|","/","—","\\"};
-//         String[] loadingCircleSequence = {"▁","▂","▃","▄","▅","▆","▇","█","▇","▆","▅","▄","▃","▁"};
-//         String[] loadingCircleSequence = {"⣾","⣽","⣻","⢿","⡿","⣟","⣯","⣷"};
-        String[] loadingCircleSequence = {"⠈","⠐","⠠","⢀","⡀","⠄","⠂","⠁"};
-        ASCII_Animation loadingCircle = new ASCII_Animation(loadingCircleSequence);
-        loadingCircle.setDelay(100);
-        loadingCircle.play();
-        loadingCircle.animate(labelUserConnected);
-
-        // busy wait until port is open
-        int i = 0;
-        while(!serialPort.openPort()) {
-            // after 10 tries of connecting, give up and throw error
-            System.out.println("Connecting to " + portName + " attempt: " + i);
-            if(i++ >= 10) {
-                success = false;
+        String newMode = (String) inputPacingModes.getSelectedItem();
+        for(byte modeIndex = 0; modeIndex < PacingModeList.length; modeIndex++) {
+            if(newMode.equals(PacingModeList[modeIndex])) {
+                PacingMode = modeIndex;
                 break;
             }
         }
 
-        // stop animation
-        loadingCircle.pause();
+        LowerRateLimit = (int) inputLowerRateLimit.getValue();
+        MaxSensorRate = (int) inputMaxSensorRate.getValue();
+        FixedAVDelay = (int) inputFixedAVDelay.getValue();
 
-        // update user intraface to show connection and update instance fields
-        if(success) {
-            // setup a thread to continuously read port on a separate thread
-            nonBlockingReading = new Thread(() -> { nonBlockingReading(serialPort); });
-            
-            // add data listener for event when data is received
-            serialPort.addDataListener(new SerialPortDataListener() {
-                @Override
-                public int getListeningEvents() { return SerialPort.LISTENING_EVENT_DATA_RECEIVED; }
-                @Override
-                public void serialEvent(SerialPortEvent event) {
-                    byte[] newData = event.getReceivedData();
-                    System.out.println("Received data of size: " + newData.length);
-                    for (int i=0; i<newData.length; i++)
-                        System.out.print((char) newData[i]);
-                    System.out.println("\n");
-                }
-            });
-            
-            // initialize port name and IS_CONNECTED flag
-            labelUserConnected.setText("☑");
-            CONNECTED_PORT_NAME = portName;
-            IS_CONNECTED = true;
-            
-            // start the polling thread
-            nonBlockingReading.start();
-        } else {
-            // safely disconnect from the port and prompt user that it is disconnected
-            labelUserConnected.setText("☒");
+        AtrAmplitude = (float) inputAtrAmplitude.getValue();
+        AtrPulseWidth = (int) inputAtrPulseWidth.getValue();
+        AtrSensitivity = (float) inputAtrSensitivity.getValue();
+
+        VentAmplitude = (float) inputVentAmplitude.getValue();
+        VentPulseWidth = (int) inputVentPulseWidth.getValue();
+        VentSensitivity = (float) inputVentSensitivity.getValue();
+
+        VentRefractoryPeriod = (int) inputVentRefractoryPeriod.getValue();
+        AtrRefractoryPeriod = (int) inputAtrRefractoryPeriod.getValue();
+
+        String newThreshold = (String) inputActivityThreshold.getSelectedItem();
+        for(byte thresholdIndex = 0; thresholdIndex < ActivityThresholdList.length; thresholdIndex++) {
+            if(newThreshold.equals(ActivityThresholdList[thresholdIndex])) {
+                ActivityThreshold = thresholdIndex;
+                break;
+            }
+        }
+
+        ReactionTime = (int) inputReactionTime.getValue();
+        ResponseFactor = (int) inputResponseFactor.getValue();
+        RecoveryTime = (int) inputRecoveryTime.getValue();
+
+        return true;
+    }
+
+    /**
+     * Initializes parameters 
+     */
+    private void buttonSendParamsToPacemakerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSendParamsToPacemakerActionPerformed
+        if(!SERIAL_COM.isConnected()) {
             safelyCloseConnectedPorts();
             JOptionPane.showMessageDialog(this,
-                    "Can't connect to " + portName + ".",
-                    "Connection timeout",
+                    "Can't send parameters because disconnected from port.",
+                    "Port not connected.",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if(!initParameters()) {
+            return;
+        }
+
+        boolean success = SERIAL_COM.writeParamaters(
+                PacingMode,
+                LowerRateLimit,
+                FixedAVDelay,
+                AtrAmplitude,
+                VentAmplitude,
+                AtrSensitivity,
+                VentSensitivity,
+                AtrPulseWidth,
+                VentPulseWidth,
+                VentRefractoryPeriod,
+                AtrRefractoryPeriod,
+                MaxSensorRate,
+                ActivityThreshold,
+                ReactionTime,
+                ResponseFactor,
+                RecoveryTime
+        );
+        
+        if(success) {
+            JOptionPane.showMessageDialog(this,
+                    "Sent parameter data.");
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to send/verify parameter data.",
+                    "Communication Error.",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }//GEN-LAST:event_buttonSendParamsToPacemakerActionPerformed
 
-        // enable button again
-        buttonConnectPort.setEnabled(true);
-
-        return success;
-    }
-    
     /**
-     * This method must be invoked on a separate runnable thread. This method
-     * constantly reads the port while it's open and IS_CONNECTED flag is true.
-     * This method can be interrupted by other methods in DCM_Form.
-     * @param serialPort - the serial port being polled
+     * Loads the the parameters from the pacemaker and displays them in a dialogue
+     * box for the user to see. It automatically does the conversion from byte to values.
      */
-    private void nonBlockingReading(SerialPort serialPort) {
-        String portName = serialPort.getSystemPortName();
-        try {
-            while(serialPort.isOpen() && IS_CONNECTED) {
-                while(serialPort.bytesAvailable() == 0) {
-                    System.out.println("Polling " + portName + "...");
-                    Thread.sleep(1000);   // poll until bytes are available
-                }
-                byte[] readBuffer = new byte[serialPort.bytesAvailable()];
-                int numRead = serialPort.readBytes(readBuffer, readBuffer.length);
-                System.out.println("Read " + numRead + " bytes.");
-            }
-            safelyCloseConnectedPorts();
-        } catch(InterruptedException e) { 
-            System.out.println("Connection to " + portName + " interrupted.");
+    private void buttonLoadParamsFromPacemakerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadParamsFromPacemakerActionPerformed
+        if(!SERIAL_COM.isConnected()) {
+            JOptionPane.showMessageDialog(this,
+                    "Can't send parameters because disconnected from port.",
+                    "Port not connected.",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
-    }
+        
+        byte[] param = SERIAL_COM.returnPacemakerParameters();
+        
+        String toDisplay = "";
+        toDisplay += String.format("%-25s%s %-5s\n", "PacingMode:", PacingModeList[param[0]], "");
+        toDisplay += String.format("%-25s%d %-5s\n", "LowerRateLimit:", (param[1]&0xFF), "ppm");
+        toDisplay += String.format("%-25s%d %-5s\n", "FixedAVDelay:", (param[2]&0xFF)*10, "ms");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "AtrAmplitude:", (param[3]&0xFF)*0.1, "V");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "VentAmplitude:", (param[4]&0xFF)*0.1, "V");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "AtrSensitivity:", (param[5]&0xFF)*0.1, "V");
+        toDisplay += String.format("%-25s%.1f %-5s\n", "VentSensitivity:", (param[6]&0xFF)*0.1, "V");
+        toDisplay += String.format("%-25s%d %-5s\n", "AtrPulseWidth:", (param[7]&0xFF), "ms");
+        toDisplay += String.format("%-25s%d %-5s\n", "VentPulseWidth:", (param[8]&0xFF), "ms");
+        toDisplay += String.format("%-25s%d %-5s\n", "VentRefractoryPeriod:", (param[9]&0xFF)*10, "ms");
+        toDisplay += String.format("%-25s%d %-5s\n", "AtrRefractoryPeriod:", (param[10]&0xFF)*10, "ms");
+        toDisplay += String.format("%-25s%d %-5s\n", "MaxSensorRate:", (param[11]&0xFF), "ppm");
+        toDisplay += String.format("%-25s%s %-5s\n", "ActivityThreshold:", ActivityThresholdList[param[12]], "");
+        toDisplay += String.format("%-25s%d %-5s\n", "ReactionTime:", (param[13]&0xFF), "sec");
+        toDisplay += String.format("%-25s%d %-5s\n", "ResponseFactor:", (param[14]&0xFF), "");
+        toDisplay += String.format("%-25s%d %-5s", "RecoveryTime:", (param[15]&0xFF), "min");
+        
+        JTextArea textArea = new JTextArea(toDisplay);
+        textArea.setEditable(false);
+        textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        
+        JOptionPane.showMessageDialog(this,
+                textArea,
+                "Parameters from Pacemaker",
+                JOptionPane.PLAIN_MESSAGE);
+    }//GEN-LAST:event_buttonLoadParamsFromPacemakerActionPerformed
 
     /**
-     * Method invokes getCommPorts() from jSerialComm, and checks if a port exists
-     * in the list obtained from getCommPorts().
-     * @param portName - the port to check if it exists
-     * @return true if portName is in the list, false otherwise
+     * Checks if a given port name is available in list of ports.
+     * @param portName - name of the port
+     * @return true if it is in, false otherwise.
      */
     private boolean isValidSerialPort(String portName) {
         SerialPort[] serialPorts = SerialPort.getCommPorts();
@@ -869,71 +801,151 @@ public class DCM_Form extends javax.swing.JFrame {
     private void refreshSerialPorts() {
         SerialPort[] serialPorts = SerialPort.getCommPorts();
         String[] serialPortNames = new String[serialPorts.length];
-        for (int i=0; i<serialPorts.length; i++) {
+        for(int i=0; i<serialPorts.length; i++) {
             serialPortNames[i] = serialPorts[i].getSystemPortName();
         }
         portSelectionBox.setModel(new javax.swing.DefaultComboBoxModel<>(serialPortNames));
     }
 
     /**
-     * Closes all connected ports and removes all data listeners. Refreshes all 
+     * Closes all connected ports and removes all data listeners. Refreshes all
      * instance fields as well as prompt the user that the connected port was disconnected.
      */
     private void safelyCloseConnectedPorts() {
-        String portName = CONNECTED_PORT_NAME;  // temporarily store 
-        if(CONNECTED_PORT_NAME != null) {
-            SerialPort portToClose = SerialPort.getCommPort(CONNECTED_PORT_NAME);
-            portToClose.removeDataListener();
-            portToClose.closePort();
-            while(portToClose.isOpen()) {}  // busy wait
-            CONNECTED_PORT_NAME = null;
-        }
-        if(IS_CONNECTED) {
-            nonBlockingReading.interrupt();
-            IS_CONNECTED = false;
-            JOptionPane.showMessageDialog(this,
-                "Disconnected from " + portName + ".",
-                "Port disconnected",
-                JOptionPane.ERROR_MESSAGE);
-        }
         labelUserConnected.setText("☒");
+        labelPacemakerModel.setText("DISCONNECTED FROM DEVICE");
+        buttonViewEGRAM.setEnabled(false);  // EGRAM is disconnected
+        SERIAL_COM.disconnect();
+        if(SERIAL_COM.isConnected()) {
+            String portName = SERIAL_COM.getPortName();
+            SERIAL_COM.disconnect();
+            JOptionPane.showMessageDialog(this,
+                    "Disconnected from " + portName + ".",
+                    "Port disconnected",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**
-     * Method attempts to open a port that user specified from combo box.
-     * This is handled in a separate thread to not stall the program.
-     */
+     * Performs on a separate thread to not stall the program when connecting.
+     * Button is disabled while thread is running so user can't spam.
+     * User is prompted an error and function returns when port is no longer available,
+     * if already connected to the same port, if port initialization fails, and if
+     * serial number can't be obtained within limited tries.
+     * If all checks pass, user is prompted so, and a new thread is launched to
+     * occasionally poll the port to continue to check if it's open.
+    */
     private void buttonConnectPortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonConnectPortActionPerformed
-        // System.out.println(SerialPort.getVersion());
+    new Thread(() -> {
+        buttonConnectPort.setEnabled(false); // disable so user doesn't spam
+
         String portName = (String) portSelectionBox.getSelectedItem();
+        SerialPort port = SerialPort.getCommPort(portName);
+
+        // loading sequence to indicate to user that DCM is connecting to port
+        connectingAnimation.play();
 
         // if for some reason port is no longer available since initialization
         if(!isValidSerialPort(portName)) {
-            safelyCloseConnectedPorts();
+            connectingAnimation.pause();
+            labelUserConnected.setText("☒");
             JOptionPane.showMessageDialog(this,
                     portName + " not found.\nCheck refreshed ports from list.",
-                    "Port not found",
+                    "Port disconnected.",
                     JOptionPane.ERROR_MESSAGE);
-            refreshSerialPorts();
+            refreshSerialPorts(); // refresh list so user can select again
+            buttonConnectPort.setEnabled(true);
             return; // stop executing method
         }
 
-        // create serial port after confirming it exists
-        SerialPort serialPort = SerialPort.getCommPort(portName);
+        // if already connected to some port
+        if(SERIAL_COM.isConnected()) {
+            // if trying to connect to already connected port
+            if(portName.equals(SERIAL_COM.getPortName())) {
+                connectingAnimation.pause();
+                labelUserConnected.setText("☑");
+                JOptionPane.showMessageDialog(this,
+                        "Already connected to " + portName + ".",
+                        "Port disconnected.",
+                        JOptionPane.ERROR_MESSAGE);
+                buttonConnectPort.setEnabled(true);
+                return;
+            }
+            // trying to connect to a different port
+            else {
+                safelyCloseConnectedPorts();
+            }
+        }
 
-        // check if it isn't already connected to same port
-        if(IS_CONNECTED && portName.equals(CONNECTED_PORT_NAME)) {
+        // initPort will try open the port,
+        // returns false if timeout error occurs when connecting
+        if(!SERIAL_COM.initPort(port)) {
+            connectingAnimation.pause();
+            labelUserConnected.setText("☒");
             JOptionPane.showMessageDialog(this,
-                    "Already connected to " + portName + ".");
-            return; // stop executing method
-        } else {
-            // if connecting to a new port when connected to a different one
-            safelyCloseConnectedPorts();
+                    "Can't connect to " + portName + ".",
+                    "Connection timeout",
+                    JOptionPane.ERROR_MESSAGE);
+            buttonConnectPort.setEnabled(true);
+            return;
         }
-        
-        // initialize port on a new thread
-        new Thread(() -> { initSerialPort(serialPort); }).start();
+
+        // if the pacemaker did NOT send a serial code, it is wrong port
+        String receivedCode = SERIAL_COM.returnSerialCode();
+        if(receivedCode.isEmpty()) {
+            connectingAnimation.pause();
+            labelUserConnected.setText("☒");
+            SERIAL_COM.disconnect();
+            JOptionPane.showMessageDialog(this,
+                    "Port open, but can't get serial number.\n"
+                            + "Could be wrong device/model connected.",
+                    "Connection timeout",
+                    JOptionPane.ERROR_MESSAGE);
+            buttonConnectPort.setEnabled(true);
+            return;
+        }
+
+        // prompt user that serial port is connected
+        connectingAnimation.pause();
+        labelUserConnected.setText("☑");
+        buttonViewEGRAM.setEnabled(true);
+        labelPacemakerModel.setText("Connected to: "
+                + receivedCode);
+        JOptionPane.showMessageDialog(this,
+                "Connected to " + portName + ".\n" +
+                        ((!receivedCode.equals(MODEL_NUMBER) && !MODEL_NUMBER.isEmpty())
+                                ? "Different pacemaker approached."
+                                : ""));
+        MODEL_NUMBER = receivedCode;
+        buttonConnectPort.setEnabled(true);
+
+        // start a separate thread that occasionally polls the port
+        new Thread(() -> {
+            while(SERIAL_COM.isConnected()) {
+                try {
+                    Thread.sleep(1000);
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            safelyCloseConnectedPorts();
+            JOptionPane.showMessageDialog(this,
+                    "Disconnected from " + portName + ".",
+                    "Port disconnected",
+                    JOptionPane.ERROR_MESSAGE);
+        }).start();
+
+    }).start();
     }//GEN-LAST:event_buttonConnectPortActionPerformed
+
+    /**
+     * Upon button press, method closes all connected ports then refreshes the
+     * available list of ports.
+     */
+    private void buttonRefreshSerialPortsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRefreshSerialPortsActionPerformed
+        safelyCloseConnectedPorts();
+        refreshSerialPorts();
+    }//GEN-LAST:event_buttonRefreshSerialPortsActionPerformed
 
     /**
      * Sets all input fields as the default/nominal values for the DCM.
@@ -941,26 +953,25 @@ public class DCM_Form extends javax.swing.JFrame {
      */
     private void buttonLoadNominalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadNominalActionPerformed
         inputPacingModes.setSelectedIndex(0);
-
         inputLowerRateLimit.setValue(60);
-        inputUpperRateLimit.setValue(120);
+        inputMaxSensorRate.setValue(120);
+        inputFixedAVDelay.setValue(150);
 
         inputAtrAmplitude.setValue(5.0f);
-        inputAtrPulseWidth.setValue(1.0f);
-        inputAtrSensitivity.setValue(0.75f);
+        inputAtrPulseWidth.setValue(1);
+        inputAtrSensitivity.setValue(0.8f);
 
-        inputVenAmplitude.setValue(5.0f);
-        inputVenPulseWidth.setValue(1.0f);
-        inputVenSensitivity.setValue(2.5f);
+        inputVentAmplitude.setValue(5.0f);
+        inputVentPulseWidth.setValue(1);
+        inputVentSensitivity.setValue(2.5f);
 
-        inputARP.setValue(320);
-        inputVRP.setValue(250);
-        inputPVARP.setValue(250);
+        inputAtrRefractoryPeriod.setValue(320);
+        inputVentRefractoryPeriod.setValue(250);
 
-        inputHystEnable.setSelected(false);
-        inputHystRateLimit.setValue(30);
-        inputSmoothEnable.setSelected(false);
-        inputSmoothPercent.setValue(5);
+        inputActivityThreshold.setSelectedIndex(3);
+        inputReactionTime.setValue(30);
+        inputResponseFactor.setValue(8);
+        inputRecoveryTime.setValue(5);
     }//GEN-LAST:event_buttonLoadNominalActionPerformed
 
     /**
@@ -986,40 +997,59 @@ public class DCM_Form extends javax.swing.JFrame {
                 paramValue = splitLine[1];
 
                 // checks if parameter name matches respective input field setter
-                if(paramName.equals("p_mode"))
-                    inputPacingModes.setSelectedItem(paramValue);
-                if(paramName.equals("p_lower_rate_limit"))
-                    inputLowerRateLimit.setValue(Integer.valueOf(paramValue));
-                if(paramName.equals("p_upper_rate_limit"))
-                    inputUpperRateLimit.setValue(Integer.valueOf(paramValue));
-                if(paramName.equals("p_atr_pulse_amplitude"))
-                    inputAtrAmplitude.setValue(Float.valueOf(paramValue));
-                if(paramName.equals("p_atr_pulse_width"))
-                    inputAtrPulseWidth.setValue(Float.valueOf(paramValue));
-                if(paramName.equals("p_atr_sensitivity"))
-                    inputAtrSensitivity.setValue(Float.valueOf(paramValue));
-                if(paramName.equals("p_vent_pulse_amplitude"))
-                    inputVenAmplitude.setValue(Float.valueOf(paramValue));
-                if(paramName.equals("p_vent_pulse_width"))
-                    inputVenPulseWidth.setValue(Float.valueOf(paramValue));
-                if(paramName.equals("p_vent_sensitivity"))
-                    inputVenSensitivity.setValue(Float.valueOf(paramValue));
-                if(paramName.equals("p_vrp"))
-                    inputARP.setValue(Integer.valueOf(paramValue));
-                if(paramName.equals("p_arp"))
-                    inputVRP.setValue(Integer.valueOf(paramValue));
-                if(paramName.equals("p_pvarp"))
-                    inputPVARP.setValue(Integer.valueOf(paramValue));
-                if(paramName.equals("p_hysteresis_enable"))
-                    inputHystEnable.setSelected(Boolean.parseBoolean(paramValue));
-                if(paramName.equals("p_hysteresis_rate_limit"))
-                    inputHystRateLimit.setValue(Integer.valueOf(paramValue));
-                if(paramName.equals("p_rate_smoothing_enable"))
-                    inputSmoothEnable.setSelected(Boolean.parseBoolean(paramValue));
-                if(paramName.equals("p_rate_smoothing_percent"))
-                    inputSmoothPercent.setValue(Integer.valueOf(paramValue));
+                switch(paramName) {
+                    case "PacingMode":
+                        inputPacingModes.setSelectedIndex(Integer.valueOf(paramValue));
+                        break;
+                    case "LowerRateLimit":
+                        inputLowerRateLimit.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "FixedAVDelay":
+                        inputFixedAVDelay.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "AtrAmplitude":
+                        inputAtrAmplitude.setValue(Float.valueOf(paramValue));
+                        break;
+                    case "VentAmplitude":
+                        inputVentAmplitude.setValue(Float.valueOf(paramValue));
+                        break;
+                    case "AtrSensitivity":
+                        inputAtrSensitivity.setValue(Float.valueOf(paramValue));
+                        break;
+                    case "VentSensitivity":
+                        inputVentSensitivity.setValue(Float.valueOf(paramValue));
+                        break;
+                    case "AtrPulseWidth":
+                        inputAtrPulseWidth.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "VentPulseWidth":
+                        inputVentPulseWidth.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "VentRefractoryPeriod":
+                        inputVentRefractoryPeriod.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "AtrRefractoryPeriod":
+                        inputAtrRefractoryPeriod.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "MaxSensorRate":
+                        inputMaxSensorRate.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "ActivityThreshold":
+                        inputActivityThreshold.setSelectedIndex(Integer.valueOf(paramValue));
+                        break;
+                    case "ReactionTime":
+                        inputReactionTime.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "ResponseFactor":
+                        inputResponseFactor.setValue(Integer.valueOf(paramValue));
+                        break;
+                    case "RecoveryTime":
+                        inputRecoveryTime.setValue(Integer.valueOf(paramValue));
+                        break;
+                }
             }
 
+            // close scanner and reader
             scanner.close();
             reader.close();
         } catch (IOException e) {
@@ -1049,28 +1079,30 @@ public class DCM_Form extends javax.swing.JFrame {
 
             // write all parameters to file directory
             FileWriter writer = new FileWriter(new File(dir, fileName));
-            writer.write("p_mode " + p_mode + "\n");
-            writer.write("p_lower_rate_limit " + p_lower_rate_limit + "\n");
-            writer.write("p_upper_rate_limit " + p_upper_rate_limit + "\n");
-            writer.write("p_atr_pulse_amplitude " + p_atr_pulse_amplitude + "\n");
-            writer.write("p_atr_pulse_width " + p_atr_pulse_width + "\n");
-            writer.write("p_atr_sensitivity " + p_atr_sensitivity + "\n");
-            writer.write("p_vent_pulse_amplitude " + p_vent_pulse_amplitude + "\n");
-            writer.write("p_vent_pulse_width " + p_vent_pulse_width + "\n");
-            writer.write("p_vent_sensitivity " + p_vent_sensitivity + "\n");
-            writer.write("p_vrp " + p_vrp + "\n");
-            writer.write("p_arp " + p_arp + "\n");
-            writer.write("p_pvarp " + p_pvarp + "\n");
-            writer.write("p_hysteresis_enable " + p_hysteresis_enable + "\n");
-            writer.write("p_hysteresis_rate_limit " + p_hysteresis_rate_limit + "\n");
-            writer.write("p_rate_smoothing_enable " + p_rate_smoothing_enable + "\n");
-            writer.write("p_rate_smoothing_percent " + p_rate_smoothing_percent + "\n");
+            writer.write("Pacemaker Model Number: " +
+                    (!MODEL_NUMBER.isEmpty() ? MODEL_NUMBER + "\n" : "NULL\n"));
+            writer.write("PacingMode " + PacingMode + "\n");
+            writer.write("LowerRateLimit " + LowerRateLimit + "\n");
+            writer.write("FixedAVDelay " + FixedAVDelay + "\n");
+            writer.write("AtrAmplitude " + AtrAmplitude + "\n");
+            writer.write("VentAmplitude " + VentAmplitude + "\n");
+            writer.write("AtrSensitivity " + AtrSensitivity + "\n");
+            writer.write("VentSensitivity " + VentSensitivity + "\n");
+            writer.write("AtrPulseWidth " + AtrPulseWidth + "\n");
+            writer.write("VentPulseWidth " + VentPulseWidth + "\n");
+            writer.write("VentRefractoryPeriod " + VentRefractoryPeriod + "\n");
+            writer.write("AtrRefractoryPeriod " + AtrRefractoryPeriod + "\n");
+            writer.write("MaxSensorRate " + MaxSensorRate + "\n");
+            writer.write("ActivityThreshold " + ActivityThreshold + "\n");
+            writer.write("ReactionTime " + ReactionTime + "\n");
+            writer.write("ResponseFactor " + ResponseFactor + "\n");
+            writer.write("RecoveryTime " + RecoveryTime + "\n");
             writer.close();
 
             // output message to user to tell them directory which file is saved to
             JOptionPane.showMessageDialog(this,
                     saveType.substring(0, 1).toUpperCase() + saveType.substring(1)
-                            + " values for '" + username + "' successfully saved.");
+                            + " values for '" + USERNAME + "' successfully saved.");
 
         } catch(Exception e) {
             e.printStackTrace();
@@ -1078,37 +1110,54 @@ public class DCM_Form extends javax.swing.JFrame {
     }
 
     /**
-     * Reads the user file containing default parameters for each user. If the 
+     * Reads the user file containing default parameters for each user. If the
      * user has an existing default setting, it is loaded; otherwise, the user
      * is prompted that they must save default values.
      */
     private void buttonLoadUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadUserDefaultActionPerformed
         String filePathDir = System.getProperty("user.dir")
                 + File.separator + "DefaultParameters"
-                + File.separator + username + ".txt";
+                + File.separator + USERNAME + ".txt";
 
-        if(new File(filePathDir).exists()) {
-            loadParamsFromDirectory(filePathDir);
-        } else {
-            JOptionPane.showMessageDialog(this, "User has no default parameters.");
+        if(!(new File(filePathDir).exists())) {
+            JOptionPane.showMessageDialog(this,
+                    "User has no default parameters.",
+                    "File path not found.",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        
+        loadParamsFromDirectory(filePathDir);
     }//GEN-LAST:event_buttonLoadUserDefaultActionPerformed
 
     /**
-     * Opens a file chooser window that lets user select the file directory 
+     * Opens a file chooser window that lets user select the file directory
      * which they want to load the parameter values from.
      */
     private void buttonLoadSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadSettingsActionPerformed
+        String filePathDir = System.getProperty("user.dir")
+                + File.separator + "ExportedParameters";
+        
+        if(!(new File(filePathDir).exists())) {
+            JOptionPane.showMessageDialog(this,
+                    "There are no exported text files.\nTry creating one.",
+                    "File path not found.",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(
                 System.getProperty("user.dir")
                         + File.separator + "ExportedParameters"));
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        Action details = fc.getActionMap().get("viewTypeDetails");
+        details.actionPerformed(null);
         fc.setDialogTitle("Select file to load.");
 
         // only perform code when user selects a file; else just do nothing
         if(fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            String filePathDir = fc.getSelectedFile().getAbsolutePath();
+            filePathDir = fc.getSelectedFile().getAbsolutePath();
             loadParamsFromDirectory(filePathDir);
         }
     }//GEN-LAST:event_buttonLoadSettingsActionPerformed
@@ -1120,7 +1169,7 @@ public class DCM_Form extends javax.swing.JFrame {
      * of a default parameter set per each user.
      */
     private void buttonSaveUserDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSaveUserDefaultActionPerformed
-        String fileName = username + ".txt";
+        String fileName = USERNAME + ".txt";
         String dir = System.getProperty("user.dir") + File.separator + "DefaultParameters";
         String saveType = "Default";
 
@@ -1135,7 +1184,7 @@ public class DCM_Form extends javax.swing.JFrame {
      */
     private void buttonExportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonExportSettingsActionPerformed
         String unixTimeStr = String.valueOf(System.currentTimeMillis() / 1000L);
-        String fileName = username + "_" + unixTimeStr + ".txt";
+        String fileName = USERNAME + "_" + unixTimeStr + ".txt";
         String dir = System.getProperty("user.dir") + File.separator + "ExportedParameters";
         String saveType = "Exported";
 
@@ -1147,22 +1196,45 @@ public class DCM_Form extends javax.swing.JFrame {
      * Only accessible if user is logged in as administrator.
      */
     private void buttonEditUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonEditUserActionPerformed
-        if(ADMIN_MODE) {
-            EditUserForm editUserForm = EditUserForm.getInstance();
-            editUserForm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            editUserForm.setLocationRelativeTo(this);
-            editUserForm.setVisible(true);
-        } else {
+        if(!ADMIN_MODE) {
             JOptionPane.showMessageDialog(this, "Login as admin.");
+            return;
         }
+
+        EDIT_USER_FORM = EditUserForm.getInstance();
+        EDIT_USER_FORM.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        EDIT_USER_FORM.setLocationRelativeTo(this);
+        EDIT_USER_FORM.setVisible(true);
     }//GEN-LAST:event_buttonEditUserActionPerformed
 
-    private void buttonChangePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonChangePasswordActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_buttonChangePasswordActionPerformed
+    private void buttonViewEGRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonViewEGRAMActionPerformed
+        if(SERIAL_COM.isConnected()) {
+            ELECTROGRAM = EGRAM.getInstance();
+            ELECTROGRAM.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            ELECTROGRAM.setLocationRelativeTo(this);
+            ELECTROGRAM.setVisible(true);
+        }
+    }//GEN-LAST:event_buttonViewEGRAMActionPerformed
 
+    /**
+     * Opens text file that should be in local directory named 'help.txt'.
+     */
     private void buttonHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonHelpActionPerformed
-        // TODO add your handling code here:
+        try {
+            String fileName = "help.txt";
+            String filePathDir = System.getProperty("user.dir") + File.separator + fileName;
+            File file = new File(filePathDir);
+            if(file.exists()) {
+                java.awt.Desktop.getDesktop().edit(file);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "File " + fileName + " not found.\nMay have been deleted.",
+                        "File path not found.",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_buttonHelpActionPerformed
 
     /**
@@ -1170,8 +1242,10 @@ public class DCM_Form extends javax.swing.JFrame {
      * Classes that handle this form should dispose1 it upon notify() call.
      */
     private void logout(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logout
-        nonBlockingReading.interrupt();
-        safelyCloseConnectedPorts();
+        if(SERIAL_COM.isConnected())
+            safelyCloseConnectedPorts();
+        USERNAME = "NULL";
+        ADMIN_MODE = false;
         synchronized(this) {
             notify();
         }
@@ -1179,82 +1253,180 @@ public class DCM_Form extends javax.swing.JFrame {
     }//GEN-LAST:event_logout
 
     /**
-     * If user selects hysteresis, the respective spinner is enabled.
-     * If user deselects it, the spinner is disabled.
-     * Function also is performed upon any state changes to check box from other methods.
+     * Disables all input fields, then enables the ones that are are used by the
+     * current pacing mode.
      */
-    private void inputHystEnableStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_inputHystEnableStateChanged
-        inputHystRateLimit.setEnabled(inputHystEnable.isSelected());
-    }//GEN-LAST:event_inputHystEnableStateChanged
-
+    private void enableInputFieldsBasedOnPacingMode() {
+        disableAllInputFields();
+        
+        inputPacingModes.setEnabled(true); // common to all modes
+        inputLowerRateLimit.setEnabled(true); // common to all modes
+        
+        String newMode = (String) inputPacingModes.getSelectedItem();
+        switch(newMode) {
+            case "AOO":
+                inputAtrAmplitude.setEnabled(true);
+                inputAtrPulseWidth.setEnabled(true);
+                break;
+            case "VOO":
+                inputVentAmplitude.setEnabled(true);
+                inputVentPulseWidth.setEnabled(true);
+                break;
+            case "AAI":
+                inputAtrAmplitude.setEnabled(true);
+                inputAtrSensitivity.setEnabled(true);
+                inputAtrPulseWidth.setEnabled(true);
+                inputAtrRefractoryPeriod.setEnabled(true);
+                break;
+            case "VVI":
+                inputVentAmplitude.setEnabled(true);
+                inputVentSensitivity.setEnabled(true);
+                inputVentPulseWidth.setEnabled(true);
+                inputVentRefractoryPeriod.setEnabled(true);
+                break;
+            case "DOO":
+                inputFixedAVDelay.setEnabled(true);
+                inputAtrAmplitude.setEnabled(true);
+                inputVentAmplitude.setEnabled(true);
+                inputAtrPulseWidth.setEnabled(true);
+                inputVentPulseWidth.setEnabled(true);
+                break;
+            case "AOOR":
+                inputAtrAmplitude.setEnabled(true);
+                inputAtrPulseWidth.setEnabled(true);
+                inputActivityThreshold.setEnabled(true);
+                inputReactionTime.setEnabled(true);
+                inputResponseFactor.setEnabled(true);
+                inputRecoveryTime.setEnabled(true);
+                break;
+            case "VOOR":
+                inputVentAmplitude.setEnabled(true);
+                inputVentPulseWidth.setEnabled(true);
+                inputActivityThreshold.setEnabled(true);
+                inputReactionTime.setEnabled(true);
+                inputResponseFactor.setEnabled(true);
+                inputRecoveryTime.setEnabled(true);
+                break;
+            case "AAIR":
+                inputAtrAmplitude.setEnabled(true);
+                inputAtrSensitivity.setEnabled(true);
+                inputAtrPulseWidth.setEnabled(true);
+                inputAtrRefractoryPeriod.setEnabled(true);
+                inputActivityThreshold.setEnabled(true);
+                inputReactionTime.setEnabled(true);
+                inputResponseFactor.setEnabled(true);
+                inputRecoveryTime.setEnabled(true);
+                break;
+            case "VVIR":
+                inputVentAmplitude.setEnabled(true);
+                inputVentSensitivity.setEnabled(true);
+                inputVentPulseWidth.setEnabled(true);
+                inputVentRefractoryPeriod.setEnabled(true);
+                inputActivityThreshold.setEnabled(true);
+                inputReactionTime.setEnabled(true);
+                inputResponseFactor.setEnabled(true);
+                inputRecoveryTime.setEnabled(true);
+                break;
+            case "DOOR":
+                inputFixedAVDelay.setEnabled(true);
+                inputAtrAmplitude.setEnabled(true);
+                inputVentAmplitude.setEnabled(true);
+                inputAtrPulseWidth.setEnabled(true);
+                inputVentPulseWidth.setEnabled(true);
+                inputActivityThreshold.setEnabled(true);
+                inputReactionTime.setEnabled(true);
+                inputResponseFactor.setEnabled(true);
+                inputRecoveryTime.setEnabled(true);
+                break;
+        }
+    }
+    
     /**
-     * If user selects rate smoothing, the respective spinner is enabled.
-     * If user deselects it, the spinner is disabled.
-     * Function also is performed upon any state changes to check box from other methods.
+     * Disables all input fields.
      */
-    private void inputSmoothEnableStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_inputSmoothEnableStateChanged
-        inputSmoothPercent.setEnabled(inputSmoothEnable.isSelected());
-    }//GEN-LAST:event_inputSmoothEnableStateChanged
+    private void disableAllInputFields() {
+        inputPacingModes.setEnabled(false);
+        inputLowerRateLimit.setEnabled(false);
+        inputFixedAVDelay.setEnabled(false);
+        inputAtrAmplitude.setEnabled(false);
+        inputVentAmplitude.setEnabled(false);
+        inputAtrSensitivity.setEnabled(false);
+        inputVentSensitivity.setEnabled(false);
+        inputAtrPulseWidth.setEnabled(false);
+        inputVentPulseWidth.setEnabled(false);
+        inputVentRefractoryPeriod.setEnabled(false);
+        inputAtrRefractoryPeriod.setEnabled(false);
+        inputMaxSensorRate.setEnabled(false);
+        inputActivityThreshold.setEnabled(false);
+        inputReactionTime.setEnabled(false);
+        inputResponseFactor.setEnabled(false);
+        inputRecoveryTime.setEnabled(false);
+    }
+    
+    /**
+     * Action listener that listens upon inputPacingModes item change.
+     * @param evt - ItemEvent object
+     */
+    private void inputPacingModesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_inputPacingModesItemStateChanged
+        enableInputFieldsBasedOnPacingMode();
+    }//GEN-LAST:event_inputPacingModesItemStateChanged
 
-    private void buttonRefreshSerialPortsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRefreshSerialPortsActionPerformed
-        // threadPortConnection.interrupt();
-        safelyCloseConnectedPorts();
-        refreshSerialPorts();
-    }//GEN-LAST:event_buttonRefreshSerialPortsActionPerformed
-
+    private ASCII_Animation connectingAnimation;
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton buttonChangePassword;
     private javax.swing.JButton buttonConnectPort;
     private javax.swing.JButton buttonEditUser;
     private javax.swing.JButton buttonExportSettings;
     private javax.swing.JButton buttonHelp;
     private javax.swing.JButton buttonLoadNominal;
+    private javax.swing.JButton buttonLoadParamsFromPacemaker;
     private javax.swing.JButton buttonLoadSettings;
     private javax.swing.JButton buttonLoadUserDefault;
     private javax.swing.JButton buttonLogout;
     private javax.swing.JButton buttonRefreshSerialPorts;
     private javax.swing.JButton buttonSaveUserDefault;
-    private javax.swing.JButton buttonSendParams;
-    private javax.swing.JSpinner inputARP;
+    private javax.swing.JButton buttonSendParamsToPacemaker;
+    private javax.swing.JButton buttonViewEGRAM;
+    private javax.swing.JComboBox<String> inputActivityThreshold;
     private javax.swing.JSpinner inputAtrAmplitude;
     private javax.swing.JSpinner inputAtrPulseWidth;
+    private javax.swing.JSpinner inputAtrRefractoryPeriod;
     private javax.swing.JSpinner inputAtrSensitivity;
-    private javax.swing.JCheckBox inputHystEnable;
-    private javax.swing.JSpinner inputHystRateLimit;
+    private javax.swing.JSpinner inputFixedAVDelay;
     private javax.swing.JSpinner inputLowerRateLimit;
-    private javax.swing.JSpinner inputPVARP;
+    private javax.swing.JSpinner inputMaxSensorRate;
     private javax.swing.JComboBox<String> inputPacingModes;
-    private javax.swing.JCheckBox inputSmoothEnable;
-    private javax.swing.JSpinner inputSmoothPercent;
-    private javax.swing.JSpinner inputUpperRateLimit;
-    private javax.swing.JSpinner inputVRP;
-    private javax.swing.JSpinner inputVenAmplitude;
-    private javax.swing.JSpinner inputVenPulseWidth;
-    private javax.swing.JSpinner inputVenSensitivity;
+    private javax.swing.JSpinner inputReactionTime;
+    private javax.swing.JSpinner inputRecoveryTime;
+    private javax.swing.JSpinner inputResponseFactor;
+    private javax.swing.JSpinner inputVentAmplitude;
+    private javax.swing.JSpinner inputVentPulseWidth;
+    private javax.swing.JSpinner inputVentRefractoryPeriod;
+    private javax.swing.JSpinner inputVentSensitivity;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel23;
-    private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel26;
-    private javax.swing.JLabel jLabel27;
-    private javax.swing.JLabel jLabel28;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JLabel labelPacemakerModel;
     private javax.swing.JLabel labelUserConnected;
     private javax.swing.JComboBox<String> portSelectionBox;
     // End of variables declaration//GEN-END:variables

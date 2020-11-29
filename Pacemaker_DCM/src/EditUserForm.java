@@ -9,14 +9,13 @@ import java.io.IOException;
 import java.util.Scanner;
 import javax.swing.*;
 
+@SuppressWarnings("unchecked")
 public class EditUserForm extends javax.swing.JFrame {
 
     private final int MAX_USER_COUNT = 10;
     private int USER_COUNT = 0;
     private final String[] USERNAMES = new String[MAX_USER_COUNT];
     private final String[] PASSWORDS = new String[MAX_USER_COUNT];
-    
-    private static EditUserForm soleInstance;
     
     public EditUserForm() {
         initUserData();
@@ -25,6 +24,7 @@ public class EditUserForm extends javax.swing.JFrame {
     }
     
     /* singleton method ensures only one object of edit user form is insantiated */
+    private static EditUserForm soleInstance;
     protected static EditUserForm getInstance() {
         if(soleInstance == null)
             soleInstance = new EditUserForm();
