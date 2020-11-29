@@ -17,6 +17,8 @@ import org.jfree.data.time.TimeSeriesCollection;
 public class EGRAM extends javax.swing.JFrame {
     
     private static DCM_SerialCOM SERIAL_COM = DCM_SerialCOM.getInstance();
+    private volatile boolean PAUSED = false;
+    private volatile int SAMPLE_PERIOD = 10;
     private TimeSeries atrial;
     private TimeSeries ventricular;
     
@@ -51,17 +53,7 @@ public class EGRAM extends javax.swing.JFrame {
         setDefaultCloseOperation(HIDE_ON_CLOSE);
         pack();
         
-        new Thread(()->{
-            try {
-                while(SERIAL_COM.isConnected()) {
-                    update();
-                    Thread.sleep(10);
-                }
-                destroyInstance();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
+        this.start();
     }
 
     private JFreeChart createChart(XYDataset dataSet1, XYDataset dataSet2) {
@@ -75,6 +67,8 @@ public class EGRAM extends javax.swing.JFrame {
         ValueAxis rangeAxis = new NumberAxis("Amplitude (V)");
         rangeAxis.setAutoRange(false);
         rangeAxis.setRange(0, 5);
+        rangeAxis.setLowerBound(0);
+        rangeAxis.setUpperBound(5);
         
         XYPlot plot = new XYPlot(dataSet1, domainAxis, rangeAxis, renderer1);
         plot.setDataset(1, dataSet2);
@@ -93,6 +87,29 @@ public class EGRAM extends javax.swing.JFrame {
         double[] values = SERIAL_COM.returnAtrVentSignals();
         atrial.add(new Millisecond(), values[0]);
         ventricular.add(new Millisecond(), values[1]);
+    }
+    
+    public void pause() {
+        PAUSED = true;
+    }
+    
+    public void resume() {
+        PAUSED = false;
+    }
+    
+    public void start() {
+        new Thread(()->{
+            try {
+                while(SERIAL_COM.isConnected()) {
+                    if(!PAUSED) 
+                        update();
+                    Thread.sleep(SAMPLE_PERIOD);
+                }
+                destroyInstance();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
     
     public static void destroyInstance() {
