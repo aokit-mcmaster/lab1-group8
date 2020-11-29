@@ -1,32 +1,55 @@
 3K04 GROUP 8'S PACEMAKER DCM PROGRAM
 
-1. Select a serial port and connect to it.
-    - when it's successfully connected, a checkmark should appear on the bottom left
-    - if a port is known to be connected, but it isn't, you may have to close and open the program again
+1. Select a serial port and press "Connect" button to connect to it.
+    - The button will be disabled until port is fully connected to.
+    - When it's successfully connected, a checkmark should appear on the bottom left.
+    - If the serial number received from the device is garbage characters, you may have to relaunch the program.
 
-2. Click spinner arrows to change values of each parameter.
-    - you cannot edit hysteresis rate limit or rate smoothing percent when they are disabled
-    - lower rate limit can't be larger than upper rate limit
-    - hysteresis rate limit can't be larger than lower rate limit
-    - each parameter has it's own unique step size and range
+2. Refresh ports.
+    - Will disconnect from any currently connected port.
+    - Will refresh the combo box to show all available serial ports.
 
-3. Load nominal values.
-    - load nominal values
-    - these values won't ever change
+2. Press spinner arrows to change values of each parameter.
+    - Lower rate limit can't be larger than max sensor rate.
+    - Each parameter has it's own unique step size and range.
+    - Input fields will be enabled/disabled whether they're needed by the respective pacing mode.
 
-4. Save default parameters or export parameters.
-    - default values are stored in /DefaultParameters/
-        - only one set of default values are stored per user
-        - saving again will overwrite the previous file
-        - each user MUST save default values before loading
-    - exported values are stored in /ExportedParameters/
-        - can store as many exported values, each with their unique name
-        - each file is tagged with a unix time code, so there is version history
+3. "Send Parameters to Pacemaker"
+    - Will parse all values from input fields and send them to connected serial port.
+    - The connected pacemaker will echo the data to ensure data was sent correctly.
+    - If there was any error, a dialog message window will prompt the user.
+    - This may stall the EGRAM occasionally.
 
-5. Load default parameters or from exported parameters.
-    - default values are loaded from /DefaultParameters/
-    - exported values are loaded from wherever user specifies through file chooser window
+4. "View Parameters from Pacemaker"
+    - Prompts the pacemaker to echo the values that are loaded onto the hardware.
+    - Values will be displayed in a dialog message window for user to see.
 
-6. Press logout to exit the DCM form.
-    - this should safely disconnect you from any connected serial ports
-    - this frame is then disposed, and should bring you back to login form
+5. "View Electrogram"
+    - Will open a window that graphs the voltages of the atrial and ventricular signals.
+    - This will constantly run in the background, and exiting the window will only hide it.
+        - This process will not disturb any functionality of the DCM.
+
+5. Load nominal values for each parameter by pressing "Load Nominal".
+    - These values are hard-coded into the program (they will never change).
+
+6. Save default parameters or export parameters with their respective buttons.
+    - Default values are stored in /DefaultParameters/
+        - Only one set of default values is stored per user.
+        - Saving again will overwrite the previous settings.
+        - Each user MUST save default values at least once before loading them.
+    - Exported values are stored in /ExportedParameters/
+        - Can store as many exported set of values, each with their unique name.
+        - Each file is named with a unix time stamp, so there is version history.
+
+7. Load default parameters or exported parameters with their respective buttons.
+    - Default values are loaded from /DefaultParameters/
+    - Exported values are loaded from wherever user specifies through file chooser menu.
+
+8. "Edit Users"
+    - Can only be viewed by those in ADMIN MODE (logged in as admin).
+    - Opens a window that allows admin to freely remove users without knowing their passwords.
+    - Can also register users.
+
+8. Press "Logout" to exit the DCM form and go back to login screen.
+    - This should safely disconnect the user from any connected serial ports.
+    - This frame is then disposed, and should bring you back to login form.
