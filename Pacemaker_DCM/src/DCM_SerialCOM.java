@@ -169,30 +169,45 @@ public class DCM_SerialCOM {
         
         int count = 0;
         while(!RECEIVED) {
-            if((count++) % 10 == 0) {
-                // if a second passes, send code again
-                sendPaceMakerCode(READ_PARAMETERS);
-            }
-            System.out.println("Sending parameters attempt: " + count);
+            sendPaceMakerCode(READ_PARAMETERS); // send code again each 100 ms
+            System.out.println("Sending/reading parameters attempt: " + (++count));
             try { Thread.sleep(100); } catch(Exception e) {}
         }
         
         boolean success = true;
-//        String test = "";
         for(int i=0; i<INPUT_BUFFER.length; i++) {
             if(INPUT_BUFFER[i] != OUTPUT_BUFFER[i+1])
                 success = false;
-//            test += "In:  " + Integer.toString(OUTPUT_BUFFER[i+1]&0xFF) + "\t";
-//            test += Integer.toString(OUTPUT_BUFFER[i+1]&0xFF).length() > 2 ? "" : "\t" ;
-//            test += "Out: " + Integer.toString(INPUT_BUFFER[i]&0xFF) + "\n";
         }
         
+        // fine to free locks now
+        RECEIVED = false;
+        GLOBAL_LOCK = false;
+
+        return success;
+    }
+    
+    public byte[] returnPacemakerParameters() {
+        while(GLOBAL_LOCK) { try { Thread.sleep(10); } catch (Exception e) {} }
+        GLOBAL_LOCK = true;
+        
+        int count = 0;
+        while(!RECEIVED) {
+            sendPaceMakerCode(READ_PARAMETERS); // send code again each 100 ms
+            System.out.println("Reading parameters attempt: " + (++count));
+            try { Thread.sleep(100); } catch(Exception e) {}
+        }
+        
+        byte bufferCopy[] = new byte[INPUT_BUFFER.length];
+        for(int i=0; i<INPUT_BUFFER.length; i++) {
+            bufferCopy[i] = INPUT_BUFFER[i];
+        }
+        
+        // fine to free locks now
         RECEIVED = false;
         GLOBAL_LOCK = false;
         
-//        JOptionPane.showMessageDialog(null, new JTextArea(test));
-
-        return success;
+        return bufferCopy;
     }
     
     public String returnSerialCode() {
