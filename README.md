@@ -77,12 +77,16 @@
 
 **DCM Login Form**
 
-![](images/DCM_LOGIN-preview.gif)
+![](images/DCM_Login_Screenshot.png)
 
 **DCM Registration Form (ADMIN VIEW)**
 
-![](images/DCM_REGISTRATION-preview.gif)
+![](images/DCM_EditUser_Screenshot.png)
 
 **DCM Program**
 
-![](images/DCM_PROGRAM-screenshot.png)
+![](images/DCM_MainInterface_Screenshot.png)
+
+**Electrogram**
+
+![](images/DCM_EGRAM_Screenshot.png)
