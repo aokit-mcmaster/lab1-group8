@@ -1,0 +1,17 @@
+Pacemaker Model Number: NULL
+PacingMode 0
+LowerRateLimit 175
+FixedAVDelay 70
+AtrAmplitude 0.0
+VentAmplitude 0.0
+AtrSensitivity 0.8
+VentSensitivity 0.0
+AtrPulseWidth 1
+VentPulseWidth 1
+VentRefractoryPeriod 150
+AtrRefractoryPeriod 150
+MaxSensorRate 175
+ActivityThreshold 0
+ReactionTime 30
+ResponseFactor 8
+RecoveryTime 5

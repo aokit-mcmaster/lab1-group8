@@ -1,0 +1,17 @@
+Pacemaker Model Number: TheodorAokiRules
+PacingMode 9
+LowerRateLimit 60
+FixedAVDelay 150
+AtrAmplitude 5.0
+VentAmplitude 5.0
+AtrSensitivity 0.8
+VentSensitivity 2.5
+AtrPulseWidth 1
+VentPulseWidth 1
+VentRefractoryPeriod 320
+AtrRefractoryPeriod 250
+MaxSensorRate 120
+ActivityThreshold 0
+ReactionTime 30
+ResponseFactor 8
+RecoveryTime 5

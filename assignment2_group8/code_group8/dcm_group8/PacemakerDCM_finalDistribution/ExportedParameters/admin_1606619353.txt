@@ -1,0 +1,17 @@
+Pacemaker Model Number: lab1-group8-100%
+PacingMode 7
+LowerRateLimit 60
+FixedAVDelay 150
+AtrAmplitude 0.0
+VentAmplitude 5.0
+AtrSensitivity 0.0
+VentSensitivity 2.5
+AtrPulseWidth 1
+VentPulseWidth 1
+VentRefractoryPeriod 250
+AtrRefractoryPeriod 500
+MaxSensorRate 120
+ActivityThreshold 3
+ReactionTime 10
+ResponseFactor 1
+RecoveryTime 5
