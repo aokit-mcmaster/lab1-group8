@@ -1298,6 +1298,7 @@ public class DCM_Form extends javax.swing.JFrame {
                 inputReactionTime.setEnabled(true);
                 inputResponseFactor.setEnabled(true);
                 inputRecoveryTime.setEnabled(true);
+                inputMaxSensorRate.setEnabled(true);
                 break;
             case "VOOR":
                 inputVentAmplitude.setEnabled(true);
@@ -1306,6 +1307,7 @@ public class DCM_Form extends javax.swing.JFrame {
                 inputReactionTime.setEnabled(true);
                 inputResponseFactor.setEnabled(true);
                 inputRecoveryTime.setEnabled(true);
+                inputMaxSensorRate.setEnabled(true);
                 break;
             case "AAIR":
                 inputAtrAmplitude.setEnabled(true);
@@ -1316,6 +1318,7 @@ public class DCM_Form extends javax.swing.JFrame {
                 inputReactionTime.setEnabled(true);
                 inputResponseFactor.setEnabled(true);
                 inputRecoveryTime.setEnabled(true);
+                inputMaxSensorRate.setEnabled(true);
                 break;
             case "VVIR":
                 inputVentAmplitude.setEnabled(true);
@@ -1326,6 +1329,7 @@ public class DCM_Form extends javax.swing.JFrame {
                 inputReactionTime.setEnabled(true);
                 inputResponseFactor.setEnabled(true);
                 inputRecoveryTime.setEnabled(true);
+                inputMaxSensorRate.setEnabled(true);
                 break;
             case "DOOR":
                 inputFixedAVDelay.setEnabled(true);
@@ -1337,6 +1341,7 @@ public class DCM_Form extends javax.swing.JFrame {
                 inputReactionTime.setEnabled(true);
                 inputResponseFactor.setEnabled(true);
                 inputRecoveryTime.setEnabled(true);
+                inputMaxSensorRate.setEnabled(true);
                 break;
         }
     }
